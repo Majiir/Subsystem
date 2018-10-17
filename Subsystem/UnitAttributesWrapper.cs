@@ -7,7 +7,7 @@ namespace Subsystem
 {
     public class UnitAttributesWrapper : NamedObjectBase, UnitAttributes
     {
-        public UnitAttributesWrapper(UnitAttributes other)
+        public UnitAttributesWrapper(UnitAttributes other) : base(other.Name)
         {
             Class = other.Class;
             SelectionFlags = other.SelectionFlags;
