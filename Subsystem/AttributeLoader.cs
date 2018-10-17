@@ -1,5 +1,8 @@
 ﻿using BBI.Core.Data;
 using BBI.Game.Data;
+using LitJson;
+using System.IO;
+using UnityEngine;
 
 namespace Subsystem
 {
@@ -7,36 +10,10 @@ namespace Subsystem
     {
         public static void LoadAttributes(EntityTypeCollection entityTypeCollection)
         {
-            var attributesPatch = new AttributesPatch
-            {
-                Entities = new System.Collections.Generic.Dictionary<string, EntityTypePatch>
-                {
-                    ["G_Catamaran_MP"] = new EntityTypePatch
-                    {
-                        UnitAttributes = new UnitAttributesPatch
-                        {
-                            MaxHealth = 450,
-                            Armour = 24,
-                        }
-                    },
-                    ["G_Harvester_MP"] = new EntityTypePatch
-                    {
-                        UnitAttributes =  new UnitAttributesPatch
-                        {
-                            MaxHealth = 25,
-                            Armour = 100,
-                        }
-                    },
-                    ["G_Carrier_MP"] = new EntityTypePatch
-                    {
-                        UnitAttributes = new UnitAttributesPatch
-                        {
-                            MaxHealth = 50000,
-                            Armour = 0,
-                        }
-                    },
-                }
-            };
+            var jsonPath = Path.Combine(Application.dataPath, "patch.json");
+            var json = File.ReadAllText(jsonPath);
+
+            var attributesPatch = JsonMapper.ToObject<AttributesPatch>(json);
 
             ApplyAttributesPatch(entityTypeCollection, attributesPatch);
         }
