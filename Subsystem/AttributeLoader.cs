@@ -7,14 +7,38 @@ namespace Subsystem
     {
         public static void LoadAttributes(EntityTypeCollection entityTypeCollection)
         {
-            var entityType = entityTypeCollection.GetEntityType("G_Baserunner_MP");
-            var unitAttributes = entityType.Get<UnitAttributes>();
-            entityType.Replace(unitAttributes, new UnitAttributesWrapper(unitAttributes)
+            var attributesPatch = new AttributesPatch
             {
-                MaxHealth = 20000,
-                Armour = 50,
-                Resource2Cost = 55,
-            });
+                Entities = new System.Collections.Generic.Dictionary<string, EntityTypePatch>
+                {
+                    ["G_Catamaran_MP"] = new EntityTypePatch
+                    {
+                        UnitAttributes = new UnitAttributesPatch
+                        {
+                            MaxHealth = 450,
+                            Armour = 24,
+                        }
+                    },
+                    ["G_Harvester_MP"] = new EntityTypePatch
+                    {
+                        UnitAttributes =  new UnitAttributesPatch
+                        {
+                            MaxHealth = 25,
+                            Armour = 100,
+                        }
+                    },
+                    ["G_Carrier_MP"] = new EntityTypePatch
+                    {
+                        UnitAttributes = new UnitAttributesPatch
+                        {
+                            MaxHealth = 50000,
+                            Armour = 0,
+                        }
+                    },
+                }
+            };
+
+            ApplyAttributesPatch(entityTypeCollection, attributesPatch);
         }
 
         public static void ApplyAttributesPatch(EntityTypeCollection entityTypeCollection, AttributesPatch attributesPatch)
