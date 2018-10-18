@@ -48,3 +48,19 @@ To use this in multiplayer, all players in the game **must** have the same versi
 ### Modifiable Attributes
 
 See https://github.com/Majiir/Subsystem/blob/master/Subsystem/UnitAttributesPatch.cs for a list of attributes that can be modified.
+
+### Serialization Notes
+
+* Some enums are marked with `[Flags]`. You must use a particular syntax in order to assign multiple flags. For example, to set a unit's `Class` to multiple values:
+
+```json
+...
+"UnitAttributes": {
+  "Class": "Hover, Carrier"
+}
+...
+```
+
+* Non-flags enums should be set as strings. (Example: `"HackableProperties": "InstantHackable"`)
+
+* `Fixed64` values are set as Numbers (equivalent to `double`) in JSON. This is technically a lossy conversion, but it will work well in most circumstances.
