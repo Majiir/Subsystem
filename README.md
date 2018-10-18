@@ -44,3 +44,7 @@ The stats are reloaded at the beginning of every game,
 ## Multiplayer Notes
 
 To use this in multiplayer, all players in the game **must** have the same version of Subsystem *and* the same `patch.json` file contents. If any player has different data, the game is liable to crash with a synchronization error.
+
+## Modifiable Attributes
+
+See https://github.com/Majiir/Subsystem/blob/master/Subsystem/UnitAttributesPatch.cs for a list of attributes that can be modified.
