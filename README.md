@@ -2,7 +2,7 @@
 
 Subsystem is a mod loader for _Homeworld: Deserts of Kharak_. It aims to have a safe, auditable and data-oriented design.
 
-## Disclaimer
+### Disclaimer
 
 Subsystem is currently in alpha. It may be extremely unstable, and it's not likely to provide useful debugging information. Use at your own risk, and please try to dig into logs on your own before reporting crashes or other odd behavior.
 
@@ -41,10 +41,10 @@ Note that the keys (`Entities`, `UnitAttributes`, etc) are case-sensitive.
 
 The stats are reloaded at the beginning of every game, 
 
-## Multiplayer Notes
+### Multiplayer Notes
 
 To use this in multiplayer, all players in the game **must** have the same version of Subsystem *and* the same `patch.json` file contents. If any player has different data, the game is liable to crash with a synchronization error.
 
-## Modifiable Attributes
+### Modifiable Attributes
 
 See https://github.com/Majiir/Subsystem/blob/master/Subsystem/UnitAttributesPatch.cs for a list of attributes that can be modified.
