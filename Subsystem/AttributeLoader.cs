@@ -42,6 +42,11 @@ namespace Subsystem
         {
             if (unitAttributesPatch.Class.HasValue) { unitAttributesWrapper.Class = unitAttributesPatch.Class.Value; }
             if (unitAttributesPatch.SelectionFlags.HasValue) { unitAttributesWrapper.SelectionFlags = unitAttributesPatch.SelectionFlags.Value; }
+
+            var navMeshAttributesWrapper = new NavMeshAttributesWrapper(unitAttributesWrapper.NavMeshAttributes);
+            ApplyNavMeshAttributesPatch(unitAttributesPatch.NavMeshAttributes, navMeshAttributesWrapper);
+            unitAttributesWrapper.NavMeshAttributes = navMeshAttributesWrapper;
+
             if (unitAttributesPatch.MaxHealth.HasValue) { unitAttributesWrapper.MaxHealth = unitAttributesPatch.MaxHealth.Value; }
             if (unitAttributesPatch.Armour.HasValue) { unitAttributesWrapper.Armour = unitAttributesPatch.Armour.Value; }
             if (unitAttributesPatch.DamageReceivedMultiplier.HasValue) { unitAttributesWrapper.DamageReceivedMultiplier = Fixed64.UnsafeFromDouble(unitAttributesPatch.DamageReceivedMultiplier.Value); }
@@ -90,6 +95,13 @@ namespace Subsystem
 
             if (unitAttributesPatch.Resource1Cost.HasValue) { unitAttributesWrapper.Resource1Cost = unitAttributesPatch.Resource1Cost.Value; }
             if (unitAttributesPatch.Resource2Cost.HasValue) { unitAttributesWrapper.Resource2Cost = unitAttributesPatch.Resource2Cost.Value; }
+        }
+
+        public static void ApplyNavMeshAttributesPatch(NavMeshAttributesPatch navMeshAttributesPatch, NavMeshAttributesWrapper navMeshAttributesWrapper)
+        {
+            if (navMeshAttributesPatch.DistanceFromObstacles.HasValue) { navMeshAttributesWrapper.DistanceFromObstacles = Fixed64.UnsafeFromDouble(navMeshAttributesPatch.DistanceFromObstacles.Value); }
+            if (navMeshAttributesPatch.DistanceErrorPercentageTolerance.HasValue) { navMeshAttributesWrapper.DistanceErrorPercentageTolerance = Fixed64.UnsafeFromDouble(navMeshAttributesPatch.DistanceErrorPercentageTolerance.Value); }
+            if (navMeshAttributesPatch.BlockedBy.HasValue) { navMeshAttributesWrapper.BlockedBy = navMeshAttributesPatch.BlockedBy.Value; }
         }
     }
 }

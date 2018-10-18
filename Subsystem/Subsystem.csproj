@@ -46,6 +46,8 @@
     <Compile Include="AttributeLoader.cs" />
     <Compile Include="AttributesPatch.cs" />
     <Compile Include="EntityTypePatch.cs" />
+    <Compile Include="NavMeshAttributesPatch.cs" />
+    <Compile Include="NavMeshAttributesWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnitAttributesPatch.cs" />
     <Compile Include="UnitAttributesWrapper.cs" />

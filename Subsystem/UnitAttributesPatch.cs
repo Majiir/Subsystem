@@ -7,6 +7,8 @@ namespace Subsystem
         public UnitClass? Class { get; set; }
         public UnitSelectionFlags? SelectionFlags { get; set; }
 
+        public NavMeshAttributesPatch NavMeshAttributes { get; set; }
+
         public int? MaxHealth { get; set; }
         public int? Armour { get; set; }
 
