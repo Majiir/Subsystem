@@ -38,15 +38,8 @@ namespace Subsystem
 
         public static void ApplyUnitAttributesPatch(UnitAttributesPatch unitAttributesPatch, UnitAttributesWrapper unitAttributesWrapper)
         {
-            if (unitAttributesPatch.MaxHealth.HasValue)
-            {
-                unitAttributesWrapper.MaxHealth = unitAttributesPatch.MaxHealth.Value;
-            }
-
-            if (unitAttributesPatch.Armour.HasValue)
-            {
-                unitAttributesWrapper.Armour = unitAttributesPatch.Armour.Value;
-            }
+            if (unitAttributesPatch.MaxHealth.HasValue) { unitAttributesWrapper.MaxHealth = unitAttributesPatch.MaxHealth.Value; }
+            if (unitAttributesPatch.Armour.HasValue) { unitAttributesWrapper.Armour = unitAttributesPatch.Armour.Value; }
         }
     }
 }
