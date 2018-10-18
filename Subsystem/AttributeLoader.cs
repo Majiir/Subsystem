@@ -57,7 +57,6 @@ namespace Subsystem
             if (unitAttributesPatch.NonAutoTargetable.HasValue) { unitAttributesWrapper.NonAutoTargetable = unitAttributesPatch.NonAutoTargetable.Value; }
             if (unitAttributesPatch.RetireTargetable.HasValue) { unitAttributesWrapper.RetireTargetable = unitAttributesPatch.RetireTargetable.Value; }
             if (unitAttributesPatch.HackedReturnTargetable.HasValue) { unitAttributesWrapper.HackedReturnTargetable = unitAttributesPatch.HackedReturnTargetable.Value; }
-            if (unitAttributesPatch.HackableProperties.HasValue) { unitAttributesWrapper.HackableProperties = unitAttributesPatch.HackableProperties.Value; }
             if (unitAttributesPatch.ExcludeFromUnitStats.HasValue) { unitAttributesWrapper.ExcludeFromUnitStats = unitAttributesPatch.ExcludeFromUnitStats.Value; }
             if (unitAttributesPatch.BlocksLOF.HasValue) { unitAttributesWrapper.BlocksLOF = unitAttributesPatch.BlocksLOF.Value; }
             if (unitAttributesPatch.WorldHeightOffset.HasValue) { unitAttributesWrapper.WorldHeightOffset = Fixed64.UnsafeFromDouble(unitAttributesPatch.WorldHeightOffset.Value); }

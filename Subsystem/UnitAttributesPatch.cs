@@ -24,7 +24,7 @@ namespace Subsystem
         public bool? NonAutoTargetable { get; set; }
         public bool? RetireTargetable { get; set; }
         public bool? HackedReturnTargetable { get; set; }
-        public HackableProperties? HackableProperties { get; set; }
+
         public bool? ExcludeFromUnitStats { get; set; }
         public bool? BlocksLOF { get; set; }
         public double? WorldHeightOffset { get; set; }
