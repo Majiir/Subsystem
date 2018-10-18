@@ -39,6 +39,8 @@ namespace Subsystem
 
         public static void ApplyUnitAttributesPatch(UnitAttributesPatch unitAttributesPatch, UnitAttributesWrapper unitAttributesWrapper)
         {
+            if (unitAttributesPatch.Class.HasValue) { unitAttributesWrapper.Class = unitAttributesPatch.Class.Value; }
+            if (unitAttributesPatch.SelectionFlags.HasValue) { unitAttributesWrapper.SelectionFlags = unitAttributesPatch.SelectionFlags.Value; }
             if (unitAttributesPatch.MaxHealth.HasValue) { unitAttributesWrapper.MaxHealth = unitAttributesPatch.MaxHealth.Value; }
             if (unitAttributesPatch.Armour.HasValue) { unitAttributesWrapper.Armour = unitAttributesPatch.Armour.Value; }
             if (unitAttributesPatch.DamageReceivedMultiplier.HasValue) { unitAttributesWrapper.DamageReceivedMultiplier = Fixed64.UnsafeFromDouble(unitAttributesPatch.DamageReceivedMultiplier.Value); }
@@ -72,6 +74,7 @@ namespace Subsystem
             if (unitAttributesPatch.ProductionQueueDepth.HasValue) { unitAttributesWrapper.ProductionQueueDepth = unitAttributesPatch.ProductionQueueDepth.Value; }
             if (unitAttributesPatch.ShowProductionQueues.HasValue) { unitAttributesWrapper.ShowProductionQueues = unitAttributesPatch.ShowProductionQueues.Value; }
             if (unitAttributesPatch.NoTextNotifications.HasValue) { unitAttributesWrapper.NoTextNotifications = unitAttributesPatch.NoTextNotifications.Value; }
+            if (unitAttributesPatch.NotificationFlags.HasValue) { unitAttributesWrapper.NotificationFlags = unitAttributesPatch.NotificationFlags.Value; }
             if (unitAttributesPatch.FireRateDisplay.HasValue) { unitAttributesWrapper.FireRateDisplay = unitAttributesPatch.FireRateDisplay.Value; }
             if (unitAttributesPatch.PriorityAsTarget.HasValue) { unitAttributesWrapper.PriorityAsTarget = Fixed64.UnsafeFromDouble(unitAttributesPatch.PriorityAsTarget.Value); }
             if (unitAttributesPatch.Resource1Cost.HasValue) { unitAttributesWrapper.Resource1Cost = unitAttributesPatch.Resource1Cost.Value; }

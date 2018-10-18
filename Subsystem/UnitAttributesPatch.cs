@@ -4,6 +4,9 @@ namespace Subsystem
 {
     public class UnitAttributesPatch
     {
+        public UnitClass? Class { get; set; }
+        public UnitSelectionFlags? SelectionFlags { get; set; }
+
         public int? MaxHealth { get; set; }
         public int? Armour { get; set; }
 
@@ -42,6 +45,8 @@ namespace Subsystem
         public int? ProductionQueueDepth { get; set; }
         public bool? ShowProductionQueues { get; set; }
         public bool? NoTextNotifications { get; set; }
+
+        public UnitNotificationFlags? NotificationFlags { get; set; }
 
         public int? FireRateDisplay { get; set; }
 
