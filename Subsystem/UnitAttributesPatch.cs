@@ -17,6 +17,9 @@ namespace Subsystem
         public double? AlertRange { get; set; }
         public double? RepairPickupRange { get; set; }
 
+        public UnitPositionReaggroConditions? UnitPositionReaggroConditions { get; set; }
+        public LeashPositionReaggroConditions? LeashPositionReaggroConditions { get; set; }
+
         public int? LeadPriority { get; set; }
         public bool? Selectable { get; set; }
         public bool? Controllable { get; set; }
@@ -24,6 +27,8 @@ namespace Subsystem
         public bool? NonAutoTargetable { get; set; }
         public bool? RetireTargetable { get; set; }
         public bool? HackedReturnTargetable { get; set; }
+
+        public HackableProperties? HackableProperties { get; set; }
 
         public bool? ExcludeFromUnitStats { get; set; }
         public bool? BlocksLOF { get; set; }
