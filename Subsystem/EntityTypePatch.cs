@@ -2,7 +2,7 @@
 {
     public class EntityTypePatch
     {
-        public UnitAttributesPatch UnitAttributes { get; set; } = new UnitAttributesPatch();
-        public ResearchItemAttributesPatch ResearchItemAttributes { get; set; } = new ResearchItemAttributesPatch();
+        public UnitAttributesPatch UnitAttributes { get; set; }
+        public ResearchItemAttributesPatch ResearchItemAttributes { get; set; }
     }
 }

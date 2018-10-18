@@ -29,19 +29,25 @@ namespace Subsystem
 
                 var entityType = entityTypeCollection.GetEntityType(entityTypeName);
 
-                var unitAttributes = entityType.Get<UnitAttributes>();
-                var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
+                if (entityTypePatch.UnitAttributes != null)
+                {
+                    var unitAttributes = entityType.Get<UnitAttributes>();
+                    var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
 
-                ApplyUnitAttributesPatch(entityTypePatch.UnitAttributes, unitAttributesWrapper);
+                    ApplyUnitAttributesPatch(entityTypePatch.UnitAttributes, unitAttributesWrapper);
 
-                entityType.Replace(unitAttributes, unitAttributesWrapper);
+                    entityType.Replace(unitAttributes, unitAttributesWrapper);
+                }
 
-                var researchItemAttributes = entityType.Get<ResearchItemAttributes>();
-                var researchItemAttributesWrapper = new ResearchItemAttributesWrapper(researchItemAttributes);
+                if (entityTypePatch.ResearchItemAttributes != null)
+                {
+                    var researchItemAttributes = entityType.Get<ResearchItemAttributes>();
+                    var researchItemAttributesWrapper = new ResearchItemAttributesWrapper(researchItemAttributes);
 
-                ApplyResearchItemAttributesPatch(entityTypePatch.ResearchItemAttributes, researchItemAttributesWrapper);
+                    ApplyResearchItemAttributesPatch(entityTypePatch.ResearchItemAttributes, researchItemAttributesWrapper);
 
-                entityType.Replace(researchItemAttributes, researchItemAttributesWrapper);
+                    entityType.Replace(researchItemAttributes, researchItemAttributesWrapper);
+                }
             }
         }
 
