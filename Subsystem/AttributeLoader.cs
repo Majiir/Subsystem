@@ -3,6 +3,7 @@ using BBI.Core.Utility.FixedPoint;
 using BBI.Game.Data;
 using LitJson;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace Subsystem
@@ -83,6 +84,9 @@ namespace Subsystem
                 BaseThreat = unitAttributesPatch.BaseThreat ?? unitAttributesWrapper.ThreatData.BaseThreat,
                 Tier = unitAttributesPatch.ThreatTier ?? unitAttributesWrapper.ThreatData.Tier,
             };
+
+            if (unitAttributesPatch.ThreatCounters != null) { unitAttributesWrapper.ThreatCounters = unitAttributesPatch.ThreatCounters.Select(x => new ThreatCounter(x)); }
+            if (unitAttributesPatch.ThreatCounteredBys != null) { unitAttributesWrapper.ThreatCounteredBys = unitAttributesPatch.ThreatCounteredBys.Select(x => new ThreatCounter(x)); }
 
             if (unitAttributesPatch.Resource1Cost.HasValue) { unitAttributesWrapper.Resource1Cost = unitAttributesPatch.Resource1Cost.Value; }
             if (unitAttributesPatch.Resource2Cost.HasValue) { unitAttributesWrapper.Resource2Cost = unitAttributesPatch.Resource2Cost.Value; }

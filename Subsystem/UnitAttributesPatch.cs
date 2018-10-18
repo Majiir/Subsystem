@@ -55,6 +55,9 @@ namespace Subsystem
         public int? BaseThreat { get; set; }
         public int? ThreatTier { get; set; }
 
+        public string[] ThreatCounters { get; set; }
+        public string[] ThreatCounteredBys { get; set; }
+
         public int? Resource1Cost { get; set; }
         public int? Resource2Cost { get; set; }
     }
