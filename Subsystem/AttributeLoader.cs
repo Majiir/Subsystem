@@ -48,6 +48,19 @@ namespace Subsystem
 
                     entityType.Replace(researchItemAttributes, researchItemAttributesWrapper);
                 }
+
+                foreach (var kvp2 in entityTypePatch.AbilityAttributes)
+                {
+                    var abilityAttributesName = kvp2.Key;
+                    var abilityAttributesPatch = kvp2.Value;
+
+                    var abilityAttributes = entityType.Get<AbilityAttributes>(abilityAttributesName);
+                    var abilityAttributesWrapper = new AbilityAttributesWrapper(abilityAttributes);
+
+                    ApplyAbilityAttributesPatch(abilityAttributesPatch, abilityAttributesWrapper);
+
+                    entityType.Replace(abilityAttributes, abilityAttributesWrapper);
+                }
             }
         }
 
@@ -117,6 +130,17 @@ namespace Subsystem
             if (researchItemAttributesPatch.ResearchVOCode != null) { researchItemAttributesWrapper.ResearchVOCode = researchItemAttributesPatch.ResearchVOCode; }
             if (researchItemAttributesPatch.Resource1Cost.HasValue) { researchItemAttributesWrapper.Resource1Cost = researchItemAttributesPatch.Resource1Cost.Value; }
             if (researchItemAttributesPatch.Resource2Cost.HasValue) { researchItemAttributesWrapper.Resource2Cost = researchItemAttributesPatch.Resource2Cost.Value; }
+        }
+
+        public static void ApplyAbilityAttributesPatch(AbilityAttributesPatch abilityAttributesPatch, AbilityAttributesWrapper abilityAttributesWrapper)
+        {
+            if (abilityAttributesPatch.CooldownTimeSecs.HasValue) { abilityAttributesWrapper.CooldownTimeSecs = Fixed64.UnsafeFromDouble(abilityAttributesPatch.CooldownTimeSecs.Value); }
+
+            var cost = new CostAttributesWrapper(abilityAttributesWrapper.Cost);
+            abilityAttributesWrapper.Cost = cost;
+
+            if (abilityAttributesPatch.Resource1Cost.HasValue) { cost.Resource1Cost = abilityAttributesPatch.Resource1Cost.Value; }
+            if (abilityAttributesPatch.Resource2Cost.HasValue) { cost.Resource2Cost = abilityAttributesPatch.Resource2Cost.Value; }
         }
     }
 }

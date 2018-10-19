@@ -43,8 +43,11 @@
     <Reference Include="UnityEngine" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AbilityAttributesPatch.cs" />
+    <Compile Include="AbilityAttributesWrapper.cs" />
     <Compile Include="AttributeLoader.cs" />
     <Compile Include="AttributesPatch.cs" />
+    <Compile Include="CostAttributesWrapper.cs" />
     <Compile Include="EntityTypePatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResearchItemAttributesPatch.cs" />
