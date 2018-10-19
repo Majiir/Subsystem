@@ -19,18 +19,31 @@ Create a JSON file like this:
 ```json
 {
   "Entities": {
-    "G_Baserunner_MP": {
-      "UnitAttributes": {
-        "MaxHealth": 3500,
-        "Resource1Cost": 225,
-        "ProductionTime": 17.5
+      "C_Escort_MP": {
+        "WeaponAttributes": {
+          "C_Escort_Weapon_G2G_MP": {
+            "BaseDamagePerRound": 14,
+            "ExcludeFromHeightAdvantage": true
+          }
+        },
+      },
+      "G_Baserunner_MP": {
+        "UnitAttributes": {
+          "MaxHealth": 3500,
+          "Armour": 3,
+          "Resource1Cost": 225,
+          "ProductionTime": 18.0
+        }
+      },
+      "Tier_3_C_Artillery": {
+        "ResearchItemAttributes": {
+          "Resource2Cost": 150,
+          "ResearchTime": 45.0,
+          "Dependencies": [
+            "Tier_2_C_ArmouredAssault"
+          ]
+        }
       }
-    },
-    "G_Carrier_MP": {
-      "UnitAttributes": {
-        "Armour": 15
-      }
-    }
   }
 }
 ```
@@ -47,7 +60,16 @@ To use this in multiplayer, all players in the game **must** have the same versi
 
 ### Modifiable Attributes
 
-See https://github.com/Majiir/Subsystem/blob/master/Subsystem/UnitAttributesPatch.cs for a list of attributes that can be modified.
+See these source files for a list of attributes that can be modified:
+
+* [AbilityAttributesPatch.cs](https://github.com/Majiir/Subsystem/blob/develop/Subsystem/AbilityAttributesPatch.cs)
+* [ResearchItemAttributesPatch.cs](https://github.com/Majiir/Subsystem/blob/develop/Subsystem/ResearchItemAttributesPatch.cs)
+* [UnitAttributesPatch.cs](https://github.com/Majiir/Subsystem/blob/develop/Subsystem/UnitAttributesPatch.cs)
+* [WeaponAttributesPatch.cs](https://github.com/Majiir/Subsystem/blob/develop/Subsystem/WeaponAttributesPatch.cs)
+
+### Entity Names
+
+This gist shows a dump of all named entity components: https://gist.github.com/Majiir/1c78930ad70a16e1bd9a116948f55409
 
 ### Serialization Notes
 
