@@ -134,7 +134,21 @@ namespace Subsystem
 
         public static void ApplyAbilityAttributesPatch(AbilityAttributesPatch abilityAttributesPatch, AbilityAttributesWrapper abilityAttributesWrapper)
         {
+            if (abilityAttributesPatch.AbilityType.HasValue) { abilityAttributesWrapper.AbilityType = abilityAttributesPatch.AbilityType.Value; }
+            if (abilityAttributesPatch.TargetingType.HasValue) { abilityAttributesWrapper.TargetingType = abilityAttributesPatch.TargetingType.Value; }
+            if (abilityAttributesPatch.TargetAlignment.HasValue) { abilityAttributesWrapper.TargetAlignment = abilityAttributesPatch.TargetAlignment.Value; }
+            if (abilityAttributesPatch.AbilityMapTargetLayers.HasValue) { abilityAttributesWrapper.AbilityMapTargetLayers = abilityAttributesPatch.AbilityMapTargetLayers.Value; }
+            if (abilityAttributesPatch.GroundAutoTargetAlignment.HasValue) { abilityAttributesWrapper.GroundAutoTargetAlignment = abilityAttributesPatch.GroundAutoTargetAlignment.Value; }
+            if (abilityAttributesPatch.EdgeOfTargetShapeMinDistance.HasValue) { abilityAttributesWrapper.EdgeOfTargetShapeMinDistance = Fixed64.UnsafeFromDouble(abilityAttributesPatch.EdgeOfTargetShapeMinDistance.Value); }
+            if (abilityAttributesPatch.CasterMovesToTarget.HasValue) { abilityAttributesWrapper.CasterMovesToTarget = abilityAttributesPatch.CasterMovesToTarget.Value; }
+            if (abilityAttributesPatch.GroupActivationType.HasValue) { abilityAttributesWrapper.GroupActivationType = abilityAttributesPatch.GroupActivationType.Value; }
+            if (abilityAttributesPatch.StartsRemovedInGameMode.HasValue) { abilityAttributesWrapper.StartsRemovedInGameMode = abilityAttributesPatch.StartsRemovedInGameMode.Value; }
             if (abilityAttributesPatch.CooldownTimeSecs.HasValue) { abilityAttributesWrapper.CooldownTimeSecs = Fixed64.UnsafeFromDouble(abilityAttributesPatch.CooldownTimeSecs.Value); }
+            if (abilityAttributesPatch.WarmupTimeSecs.HasValue) { abilityAttributesWrapper.WarmupTimeSecs = Fixed64.UnsafeFromDouble(abilityAttributesPatch.WarmupTimeSecs.Value); }
+            if (abilityAttributesPatch.SharedCooldownChannel.HasValue) { abilityAttributesWrapper.SharedCooldownChannel = abilityAttributesPatch.SharedCooldownChannel.Value; }
+            if (abilityAttributesPatch.SkipCastOnArrivalConditions.HasValue) { abilityAttributesWrapper.SkipCastOnArrivalConditions = abilityAttributesPatch.SkipCastOnArrivalConditions.Value; }
+            if (abilityAttributesPatch.IsToggleable.HasValue) { abilityAttributesWrapper.IsToggleable = abilityAttributesPatch.IsToggleable.Value; }
+            if (abilityAttributesPatch.CastOnDeath.HasValue) { abilityAttributesWrapper.CastOnDeath = abilityAttributesPatch.CastOnDeath.Value; }
 
             var cost = new CostAttributesWrapper(abilityAttributesWrapper.Cost);
             abilityAttributesWrapper.Cost = cost;
