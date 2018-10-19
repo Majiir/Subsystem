@@ -1,4 +1,5 @@
-﻿using BBI.Core.Data;
+﻿using BBI.Core;
+using BBI.Core.Data;
 using BBI.Core.Utility.FixedPoint;
 using BBI.Game.Data;
 using LitJson;
@@ -61,6 +62,48 @@ namespace Subsystem
 
                     entityType.Replace(abilityAttributes, abilityAttributesWrapper);
                 }
+
+                foreach (var kvp2 in entityTypePatch.WeaponAttributes)
+                {
+                    var weaponAttributesName = kvp2.Key;
+                    var weaponAttributesPatch = kvp2.Value;
+
+                    var weaponAttributes = entityType.Get<WeaponAttributes>(weaponAttributesName);
+                    var weaponAttributesWrapper = new WeaponAttributesWrapper(weaponAttributes);
+
+                    ApplyWeaponAttributesPatch(weaponAttributesPatch, weaponAttributesWrapper);
+
+                    entityType.Replace(weaponAttributes, weaponAttributesWrapper);
+
+                    rebindWeaponAttributes(entityType, weaponAttributesWrapper);
+                }
+            }
+        }
+
+        private static void rebindWeaponAttributes(EntityTypeAttributes entityType, WeaponAttributesWrapper weaponAttributesWrapper)
+        {
+            var unitAttributes = entityType.Get<UnitAttributes>();
+            if (unitAttributes != null)
+            {
+                var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
+
+                var weaponLoadout = unitAttributesWrapper.WeaponLoadout.Select(weaponBinding =>
+                    new WeaponBinding(
+                        weaponID: weaponBinding.WeaponID,
+                        weaponBindingIndex: weaponBinding.WeaponBindingIndex,
+                        weapon: weaponAttributesWrapper,
+                        ammoID: weaponBinding.AmmoID,
+                        turretIndex: weaponBinding.TurretIndex,
+                        defaultTurretAngleOffsetRadians: weaponBinding.DefaultTurretAngleOffsetRadians,
+                        disabledOnSpawn: weaponBinding.DisabledOnSpawn,
+                        weaponOffsetFromUnitOrigin: weaponBinding.OffsetFromUnitCenterInLocalSpace,
+                        showAmmoOnHUD: weaponBinding.ShowAmmoOnHUD
+                    )
+                );
+
+                unitAttributesWrapper.WeaponLoadout = weaponLoadout.ToArray();
+
+                entityType.Replace(unitAttributes, unitAttributesWrapper);
             }
         }
 
@@ -155,6 +198,44 @@ namespace Subsystem
 
             if (abilityAttributesPatch.Resource1Cost.HasValue) { cost.Resource1Cost = abilityAttributesPatch.Resource1Cost.Value; }
             if (abilityAttributesPatch.Resource2Cost.HasValue) { cost.Resource2Cost = abilityAttributesPatch.Resource2Cost.Value; }
+        }
+
+        public static void ApplyWeaponAttributesPatch(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
+        {
+            if (weaponAttributesPatch.ExcludeFromAutoTargetAcquisition.HasValue) { weaponAttributesWrapper.ExcludeFromAutoTargetAcquisition = weaponAttributesPatch.ExcludeFromAutoTargetAcquisition.Value; }
+            if (weaponAttributesPatch.ExcludeFromAutoFire.HasValue) { weaponAttributesWrapper.ExcludeFromAutoFire = weaponAttributesPatch.ExcludeFromAutoFire.Value; }
+            if (weaponAttributesPatch.ExcludeFromHeightAdvantage.HasValue) { weaponAttributesWrapper.ExcludeFromHeightAdvantage = weaponAttributesPatch.ExcludeFromHeightAdvantage.Value; }
+            if (weaponAttributesPatch.DamageType.HasValue) { weaponAttributesWrapper.DamageType = weaponAttributesPatch.DamageType.Value; }
+            if (weaponAttributesPatch.IsTracer.HasValue) { weaponAttributesWrapper.IsTracer = weaponAttributesPatch.IsTracer.Value; }
+            if (weaponAttributesPatch.TracerSpeed.HasValue) { weaponAttributesWrapper.TracerSpeed = Fixed64.UnsafeFromDouble(weaponAttributesPatch.TracerSpeed.Value); }
+            if (weaponAttributesPatch.TracerLength.HasValue) { weaponAttributesWrapper.TracerLength = Fixed64.UnsafeFromDouble(weaponAttributesPatch.TracerLength.Value); }
+            if (weaponAttributesPatch.BaseDamagePerRound.HasValue) { weaponAttributesWrapper.BaseDamagePerRound = Fixed64.UnsafeFromDouble(weaponAttributesPatch.BaseDamagePerRound.Value); }
+            if (weaponAttributesPatch.BaseWreckDamagePerRound.HasValue) { weaponAttributesWrapper.BaseWreckDamagePerRound = Fixed64.UnsafeFromDouble(weaponAttributesPatch.BaseWreckDamagePerRound.Value); }
+            if (weaponAttributesPatch.FiringRecoil.HasValue) { weaponAttributesWrapper.FiringRecoil = weaponAttributesPatch.FiringRecoil.Value; }
+            if (weaponAttributesPatch.WindUpTimeMS.HasValue) { weaponAttributesWrapper.WindUpTimeMS = weaponAttributesPatch.WindUpTimeMS.Value; }
+            if (weaponAttributesPatch.RateOfFire.HasValue) { weaponAttributesWrapper.RateOfFire = weaponAttributesPatch.RateOfFire.Value; }
+            if (weaponAttributesPatch.NumberOfBursts.HasValue) { weaponAttributesWrapper.NumberOfBursts = weaponAttributesPatch.NumberOfBursts.Value; }
+            if (weaponAttributesPatch.DamagePacketsPerShot.HasValue) { weaponAttributesWrapper.DamagePacketsPerShot = weaponAttributesPatch.DamagePacketsPerShot.Value; }
+            if (weaponAttributesPatch.BurstPeriodMinTimeMS.HasValue) { weaponAttributesWrapper.BurstPeriodMinTimeMS = weaponAttributesPatch.BurstPeriodMinTimeMS.Value; }
+            if (weaponAttributesPatch.BurstPeriodMaxTimeMS.HasValue) { weaponAttributesWrapper.BurstPeriodMaxTimeMS = weaponAttributesPatch.BurstPeriodMaxTimeMS.Value; }
+            if (weaponAttributesPatch.CooldownTimeMS.HasValue) { weaponAttributesWrapper.CooldownTimeMS = weaponAttributesPatch.CooldownTimeMS.Value; }
+            if (weaponAttributesPatch.WindDownTimeMS.HasValue) { weaponAttributesWrapper.WindDownTimeMS = weaponAttributesPatch.WindDownTimeMS.Value; }
+            if (weaponAttributesPatch.ReloadTimeMS.HasValue) { weaponAttributesWrapper.ReloadTimeMS = weaponAttributesPatch.ReloadTimeMS.Value; }
+            if (weaponAttributesPatch.LineOfSightRequired.HasValue) { weaponAttributesWrapper.LineOfSightRequired = weaponAttributesPatch.LineOfSightRequired.Value; }
+            if (weaponAttributesPatch.LeadsTarget.HasValue) { weaponAttributesWrapper.LeadsTarget = weaponAttributesPatch.LeadsTarget.Value; }
+            if (weaponAttributesPatch.KillSkipsUnitDeathSequence.HasValue) { weaponAttributesWrapper.KillSkipsUnitDeathSequence = weaponAttributesPatch.KillSkipsUnitDeathSequence.Value; }
+            if (weaponAttributesPatch.RevealTriggers.HasValue) { weaponAttributesWrapper.RevealTriggers = weaponAttributesPatch.RevealTriggers.Value; }
+            if (weaponAttributesPatch.UnitStatusAttackingTriggers.HasValue) { weaponAttributesWrapper.UnitStatusAttackingTriggers = weaponAttributesPatch.UnitStatusAttackingTriggers.Value; }
+            if (weaponAttributesPatch.TargetStyle.HasValue) { weaponAttributesWrapper.TargetStyle = weaponAttributesPatch.TargetStyle.Value; }
+            if (weaponAttributesPatch.AreaOfEffectFalloffType.HasValue) { weaponAttributesWrapper.AreaOfEffectFalloffType = weaponAttributesPatch.AreaOfEffectFalloffType.Value; }
+            if (weaponAttributesPatch.AreaOfEffectRadius.HasValue) { weaponAttributesWrapper.AreaOfEffectRadius = Fixed64.UnsafeFromDouble(weaponAttributesPatch.AreaOfEffectRadius.Value); }
+            if (weaponAttributesPatch.ExcludeWeaponOwnerFromAreaOfEffect.HasValue) { weaponAttributesWrapper.ExcludeWeaponOwnerFromAreaOfEffect = weaponAttributesPatch.ExcludeWeaponOwnerFromAreaOfEffect.Value; }
+            if (weaponAttributesPatch.FriendlyFireDamageScalar.HasValue) { weaponAttributesWrapper.FriendlyFireDamageScalar = Fixed64.UnsafeFromDouble(weaponAttributesPatch.FriendlyFireDamageScalar.Value); }
+            if (weaponAttributesPatch.WeaponOwnerFriendlyFireDamageScalar.HasValue) { weaponAttributesWrapper.WeaponOwnerFriendlyFireDamageScalar = Fixed64.UnsafeFromDouble(weaponAttributesPatch.WeaponOwnerFriendlyFireDamageScalar.Value); }
+            if (weaponAttributesPatch.ProjectileEntityTypeToSpawn != null) { weaponAttributesWrapper.ProjectileEntityTypeToSpawn = weaponAttributesPatch.ProjectileEntityTypeToSpawn; }
+            if (weaponAttributesPatch.StatusEffectsTargetAlignment.HasValue) { weaponAttributesWrapper.StatusEffectsTargetAlignment = weaponAttributesPatch.StatusEffectsTargetAlignment.Value; }
+            if (weaponAttributesPatch.StatusEffectsExcludeTargetType.HasValue) { weaponAttributesWrapper.StatusEffectsExcludeTargetType = weaponAttributesPatch.StatusEffectsExcludeTargetType.Value; }
+            if (weaponAttributesPatch.ActiveStatusEffectsIndex.HasValue) { weaponAttributesWrapper.ActiveStatusEffectsIndex = weaponAttributesPatch.ActiveStatusEffectsIndex.Value; }
         }
     }
 }

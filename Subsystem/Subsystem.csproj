@@ -54,6 +54,8 @@
     <Compile Include="ResearchItemAttributesWrapper.cs" />
     <Compile Include="UnitAttributesPatch.cs" />
     <Compile Include="UnitAttributesWrapper.cs" />
+    <Compile Include="WeaponAttributesPatch.cs" />
+    <Compile Include="WeaponAttributesWrapper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
