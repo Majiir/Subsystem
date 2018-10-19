@@ -43,12 +43,19 @@
     <Reference Include="UnityEngine" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AbilityAttributesPatch.cs" />
+    <Compile Include="AbilityAttributesWrapper.cs" />
     <Compile Include="AttributeLoader.cs" />
     <Compile Include="AttributesPatch.cs" />
+    <Compile Include="CostAttributesWrapper.cs" />
     <Compile Include="EntityTypePatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResearchItemAttributesPatch.cs" />
+    <Compile Include="ResearchItemAttributesWrapper.cs" />
     <Compile Include="UnitAttributesPatch.cs" />
     <Compile Include="UnitAttributesWrapper.cs" />
+    <Compile Include="WeaponAttributesPatch.cs" />
+    <Compile Include="WeaponAttributesWrapper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

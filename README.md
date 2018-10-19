@@ -2,7 +2,7 @@
 
 Subsystem is a mod loader for _Homeworld: Deserts of Kharak_. It aims to have a safe, auditable and data-oriented design.
 
-## Disclaimer
+### Disclaimer
 
 Subsystem is currently in alpha. It may be extremely unstable, and it's not likely to provide useful debugging information. Use at your own risk, and please try to dig into logs on your own before reporting crashes or other odd behavior.
 
@@ -41,10 +41,26 @@ Note that the keys (`Entities`, `UnitAttributes`, etc) are case-sensitive.
 
 The stats are reloaded at the beginning of every game, 
 
-## Multiplayer Notes
+### Multiplayer Notes
 
 To use this in multiplayer, all players in the game **must** have the same version of Subsystem *and* the same `patch.json` file contents. If any player has different data, the game is liable to crash with a synchronization error.
 
-## Modifiable Attributes
+### Modifiable Attributes
 
 See https://github.com/Majiir/Subsystem/blob/master/Subsystem/UnitAttributesPatch.cs for a list of attributes that can be modified.
+
+### Serialization Notes
+
+* Some enums are marked with `[Flags]`. You must use a particular syntax in order to assign multiple flags. For example, to set a unit's `Class` to multiple values:
+
+```json
+...
+"UnitAttributes": {
+  "Class": "Hover, Carrier"
+}
+...
+```
+
+* Non-flags enums should be set as strings. (Example: `"HackableProperties": "InstantHackable"`)
+
+* `Fixed64` values are set as Numbers (equivalent to `double`) in JSON. This is technically a lossy conversion, but it will work well in most circumstances.
