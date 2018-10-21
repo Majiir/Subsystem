@@ -212,18 +212,18 @@ namespace Subsystem
             if (unitAttributesPatch.Resource2Cost.HasValue) { unitAttributesWrapper.Resource2Cost = unitAttributesPatch.Resource2Cost.Value; }
         }
 
-        public static void ApplyResearchItemAttributesPatch(ResearchItemAttributesPatch researchItemAttributesPatch, ResearchItemAttributesWrapper researchItemAttributesWrapper)
+        public void ApplyResearchItemAttributesPatch(ResearchItemAttributesPatch researchItemAttributesPatch, ResearchItemAttributesWrapper researchItemAttributesWrapper)
         {
-            if (researchItemAttributesPatch.TypeOfResearch.HasValue) { researchItemAttributesWrapper.TypeOfResearch = researchItemAttributesPatch.TypeOfResearch.Value; }
-            if (researchItemAttributesPatch.IconSpriteName != null) { researchItemAttributesWrapper.IconSpriteName = researchItemAttributesPatch.IconSpriteName; }
-            if (researchItemAttributesPatch.LocalizedResearchTitleStringID != null) { researchItemAttributesWrapper.LocalizedResearchTitleStringID = researchItemAttributesPatch.LocalizedResearchTitleStringID; }
-            if (researchItemAttributesPatch.LocalizedShortDescriptionStringID != null) { researchItemAttributesWrapper.LocalizedShortDescriptionStringID = researchItemAttributesPatch.LocalizedShortDescriptionStringID; }
-            if (researchItemAttributesPatch.LocalizedLongDescriptionStringID != null) { researchItemAttributesWrapper.LocalizedLongDescriptionStringID = researchItemAttributesPatch.LocalizedLongDescriptionStringID; }
-            if (researchItemAttributesPatch.ResearchTime.HasValue) { researchItemAttributesWrapper.ResearchTime = Fixed64.UnsafeFromDouble(researchItemAttributesPatch.ResearchTime.Value); }
-            if (researchItemAttributesPatch.Dependencies != null) { researchItemAttributesWrapper.Dependencies = researchItemAttributesPatch.Dependencies; }
-            if (researchItemAttributesPatch.ResearchVOCode != null) { researchItemAttributesWrapper.ResearchVOCode = researchItemAttributesPatch.ResearchVOCode; }
-            if (researchItemAttributesPatch.Resource1Cost.HasValue) { researchItemAttributesWrapper.Resource1Cost = researchItemAttributesPatch.Resource1Cost.Value; }
-            if (researchItemAttributesPatch.Resource2Cost.HasValue) { researchItemAttributesWrapper.Resource2Cost = researchItemAttributesPatch.Resource2Cost.Value; }
+            applyPropertyPatch(researchItemAttributesPatch.TypeOfResearch, () => researchItemAttributesWrapper.TypeOfResearch);
+            applyPropertyPatch(researchItemAttributesPatch.IconSpriteName, () => researchItemAttributesWrapper.IconSpriteName);
+            applyPropertyPatch(researchItemAttributesPatch.LocalizedResearchTitleStringID, () => researchItemAttributesWrapper.LocalizedResearchTitleStringID);
+            applyPropertyPatch(researchItemAttributesPatch.LocalizedShortDescriptionStringID, () => researchItemAttributesWrapper.LocalizedShortDescriptionStringID);
+            applyPropertyPatch(researchItemAttributesPatch.LocalizedLongDescriptionStringID, () => researchItemAttributesWrapper.LocalizedLongDescriptionStringID);
+            applyPropertyPatch(researchItemAttributesPatch.ResearchTime, () => researchItemAttributesWrapper.ResearchTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(researchItemAttributesPatch.Dependencies, () => researchItemAttributesWrapper.Dependencies);
+            applyPropertyPatch(researchItemAttributesPatch.ResearchVOCode, () => researchItemAttributesWrapper.ResearchVOCode);
+            applyPropertyPatch(researchItemAttributesPatch.Resource1Cost, () => researchItemAttributesWrapper.Resource1Cost);
+            applyPropertyPatch(researchItemAttributesPatch.Resource2Cost, () => researchItemAttributesWrapper.Resource2Cost);
         }
 
         public static void ApplyAbilityAttributesPatch(AbilityAttributesPatch abilityAttributesPatch, AbilityAttributesWrapper abilityAttributesWrapper)
