@@ -306,10 +306,43 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.ExcludeWeaponOwnerFromAreaOfEffect, () => weaponAttributesWrapper.ExcludeWeaponOwnerFromAreaOfEffect);
             applyPropertyPatch(weaponAttributesPatch.FriendlyFireDamageScalar, () => weaponAttributesWrapper.FriendlyFireDamageScalar, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(weaponAttributesPatch.WeaponOwnerFriendlyFireDamageScalar, () => weaponAttributesWrapper.WeaponOwnerFriendlyFireDamageScalar, x => Fixed64.UnsafeFromDouble(x));
+
+            applyRangeAttributes(WeaponRange.Short, weaponAttributesPatch.RangeAttributesShort, weaponAttributesWrapper);
+            applyRangeAttributes(WeaponRange.Medium, weaponAttributesPatch.RangeAttributesMedium, weaponAttributesWrapper);
+            applyRangeAttributes(WeaponRange.Long, weaponAttributesPatch.RangeAttributesLong, weaponAttributesWrapper);
+
             applyPropertyPatch(weaponAttributesPatch.ProjectileEntityTypeToSpawn, () => weaponAttributesWrapper.ProjectileEntityTypeToSpawn);
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsTargetAlignment, () => weaponAttributesWrapper.StatusEffectsTargetAlignment);
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsExcludeTargetType, () => weaponAttributesWrapper.StatusEffectsExcludeTargetType);
             applyPropertyPatch(weaponAttributesPatch.ActiveStatusEffectsIndex, () => weaponAttributesWrapper.ActiveStatusEffectsIndex);
+        }
+
+        private void applyRangeAttributes(WeaponRange weaponRange, RangeBasedWeaponAttributesPatch rangePatch, WeaponAttributesWrapper weaponWrapper)
+        {
+            if (rangePatch == null) { return; }
+
+            var ranges = weaponWrapper.Ranges;
+
+            var range = ranges.SingleOrDefault(r => r.Range == weaponRange);
+
+            var rangeWrapper = range != null
+                ? new RangeBasedWeaponAttributesWrapper(range)
+                : new RangeBasedWeaponAttributesWrapper(weaponRange);
+
+            ApplyRangeBasedWeaponAttributesPatch(rangePatch, rangeWrapper);
+
+            weaponWrapper.Ranges =
+                ranges.Where(r => r.Range < weaponRange)
+                .Concat(new[] { rangeWrapper })
+                .Concat(ranges.Where(r => r.Range > weaponRange))
+                .ToArray();
+        }
+
+        public void ApplyRangeBasedWeaponAttributesPatch(RangeBasedWeaponAttributesPatch rangePatch, RangeBasedWeaponAttributesWrapper rangeWrapper)
+        {
+            applyPropertyPatch(rangePatch.Accuracy, () => rangeWrapper.Accuracy, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(rangePatch.Distance, () => rangeWrapper.Distance, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(rangePatch.MinDistance, () => rangeWrapper.MinDistance, x => Fixed64.UnsafeFromDouble(x));
         }
     }
 }
