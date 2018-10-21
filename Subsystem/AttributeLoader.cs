@@ -17,13 +17,20 @@ namespace Subsystem
 
         public static void LoadAttributes(EntityTypeCollection entityTypeCollection)
         {
-            var jsonPath = Path.Combine(Application.dataPath, "patch.json");
-            var json = File.ReadAllText(jsonPath);
+            try
+            {
+                var jsonPath = Path.Combine(Application.dataPath, "patch.json");
+                var json = File.ReadAllText(jsonPath);
 
-            var attributesPatch = JsonMapper.ToObject<AttributesPatch>(json);
+                var attributesPatch = JsonMapper.ToObject<AttributesPatch>(json);
 
-            var loader = new AttributeLoader();
-            loader.ApplyAttributesPatch(entityTypeCollection, attributesPatch);
+                var loader = new AttributeLoader();
+                loader.ApplyAttributesPatch(entityTypeCollection, attributesPatch);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[SUBSYSTEM] Error applying patch file: {e}");
+            }
         }
 
         public void ApplyAttributesPatch(EntityTypeCollection entityTypeCollection, AttributesPatch attributesPatch)
