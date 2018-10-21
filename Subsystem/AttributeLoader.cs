@@ -3,14 +3,18 @@ using BBI.Core.Data;
 using BBI.Core.Utility.FixedPoint;
 using BBI.Game.Data;
 using LitJson;
+using System;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using UnityEngine;
 
 namespace Subsystem
 {
     public class AttributeLoader
     {
+        private readonly TextWriter logger = new StringWriter();
+
         public static void LoadAttributes(EntityTypeCollection entityTypeCollection)
         {
             var jsonPath = Path.Combine(Application.dataPath, "patch.json");
@@ -18,10 +22,11 @@ namespace Subsystem
 
             var attributesPatch = JsonMapper.ToObject<AttributesPatch>(json);
 
-            ApplyAttributesPatch(entityTypeCollection, attributesPatch);
+            var loader = new AttributeLoader();
+            loader.ApplyAttributesPatch(entityTypeCollection, attributesPatch);
         }
 
-        public static void ApplyAttributesPatch(EntityTypeCollection entityTypeCollection, AttributesPatch attributesPatch)
+        public void ApplyAttributesPatch(EntityTypeCollection entityTypeCollection, AttributesPatch attributesPatch)
         {
             foreach (var kvp in attributesPatch.Entities)
             {
@@ -78,6 +83,52 @@ namespace Subsystem
                     rebindWeaponAttributes(entityType, weaponAttributesWrapper);
                 }
             }
+
+            Debug.Log($"[SUBSYSTEM] Applied attributes patch:\n\n{logger.ToString()}");
+        }
+
+        private void applyPropertyPatch<TProperty>(TProperty? newValue, Expression<Func<TProperty>> expression) where TProperty : struct
+        {
+            if (newValue.HasValue)
+            {
+                setProperty(newValue.Value, expression, x => x);
+            }
+        }
+
+        private void applyPropertyPatch<TProperty>(TProperty newValue, Expression<Func<TProperty>> expression) where TProperty : class
+        {
+            if (newValue != null)
+            {
+                setProperty(newValue, expression, x => x);
+            }
+        }
+
+        private void applyPropertyPatch<TValue, TProperty>(TValue? newValue, Expression<Func<TProperty>> expression, Func<TValue, TProperty> projection) where TValue : struct
+        {
+            if (newValue.HasValue)
+            {
+                setProperty(newValue.Value, expression, projection);
+            }
+        }
+
+        private void applyPropertyPatch<TValue, TProperty>(TValue newValue, Expression<Func<TProperty>> expression, Func<TValue, TProperty> projection) where TValue : class
+        {
+            if (newValue != null)
+            {
+                setProperty(newValue, expression, projection);
+            }
+        }
+
+        private void setProperty<TValue, TProperty>(TValue newValue, Expression<Func<TProperty>> expression, Func<TValue, TProperty> projection)
+        {
+            var value = projection(newValue);
+
+            var accessor = new PropertyAccessor<TProperty>(expression);
+
+            var oldValue = accessor.Get();
+            accessor.Set(value);
+
+            logger.WriteLine($"    set {accessor.Name} = {value} (old value: {oldValue})");
         }
 
         private static void rebindWeaponAttributes(EntityTypeAttributes entityType, WeaponAttributesWrapper weaponAttributesWrapper)
