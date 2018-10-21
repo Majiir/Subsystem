@@ -41,10 +41,10 @@ namespace Subsystem
                 var entityTypePatch = kvp.Value;
 
                 var entityType = entityTypeCollection.GetEntityType(entityTypeName);
-
                 if (entityType == null)
                 {
                     logger.WriteLine($"NOTICE: EntityType {entityTypeName} Not found");
+                    logger.WriteLine();
                     continue;
                 }
 
@@ -90,6 +90,7 @@ namespace Subsystem
                     if (abilityAttributes == null)
                     {
                         logger.WriteLine($"ERROR: Ability name {abilityAttributesName} not found");
+                        logger.WriteLine();
                         continue;
                     }
 
@@ -113,6 +114,7 @@ namespace Subsystem
                     if (weaponAttributes == null)
                     {
                         logger.WriteLine($"ERROR: Weapon name {weaponAttributesName} not found");
+                        logger.WriteLine();
                         continue;
                     }
 
