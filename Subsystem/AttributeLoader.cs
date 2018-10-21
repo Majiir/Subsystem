@@ -339,27 +339,23 @@ namespace Subsystem
 
         private void applyRangeAttributes(WeaponRange weaponRange, RangeBasedWeaponAttributesPatch rangePatch, WeaponAttributesWrapper weaponWrapper)
         {
+            if (rangePatch == null) { return; }
+
             var ranges = weaponWrapper.Ranges;
 
             var range = ranges.SingleOrDefault(r => r.Range == weaponRange);
 
-            if (rangePatch == null && range == null) { return; }
+            var rangeWrapper = range != null
+                ? new RangeBasedWeaponAttributesWrapper(range)
+                : new RangeBasedWeaponAttributesWrapper(weaponRange);
 
-            var newRanges = ranges.Where(r => r.Range < weaponRange);
+            ApplyRangeBasedWeaponAttributesPatch(rangePatch, rangeWrapper);
 
-            if (rangePatch != null)
-            {
-                var rangeWrapper = range != null
-                    ? new RangeBasedWeaponAttributesWrapper(range)
-                    : new RangeBasedWeaponAttributesWrapper(weaponRange);
-
-                ApplyRangeBasedWeaponAttributesPatch(rangePatch, rangeWrapper);
-                newRanges = newRanges.Concat(new[] { rangeWrapper });
-            }
-
-            newRanges = newRanges.Concat(ranges.Where(r => r.Range > weaponRange));
-
-            weaponWrapper.Ranges = newRanges.ToArray();
+            weaponWrapper.Ranges =
+                ranges.Where(r => r.Range < weaponRange)
+                .Concat(new[] { rangeWrapper })
+                .Concat(ranges.Where(r => r.Range > weaponRange))
+                .ToArray();
         }
 
         public void ApplyRangeBasedWeaponAttributesPatch(RangeBasedWeaponAttributesPatch rangePatch, RangeBasedWeaponAttributesWrapper rangeWrapper)
