@@ -41,6 +41,12 @@ namespace Subsystem
                 var entityTypePatch = kvp.Value;
 
                 var entityType = entityTypeCollection.GetEntityType(entityTypeName);
+                if (entityType == null)
+                {
+                    logger.WriteLine($"NOTICE: EntityType {entityTypeName} Not found");
+                    logger.WriteLine();
+                    continue;
+                }
 
                 logger.WriteLine($"EntityType: {entityTypeName}");
                 logger.WriteLine();
@@ -81,6 +87,13 @@ namespace Subsystem
                     logger.WriteLine($"  AbilityAttributes: {abilityAttributesName}");
 
                     var abilityAttributes = entityType.Get<AbilityAttributes>(abilityAttributesName);
+                    if (abilityAttributes == null)
+                    {
+                        logger.WriteLine($"ERROR: Ability name {abilityAttributesName} not found");
+                        logger.WriteLine();
+                        continue;
+                    }
+
                     var abilityAttributesWrapper = new AbilityAttributesWrapper(abilityAttributes);
 
                     ApplyAbilityAttributesPatch(abilityAttributesPatch, abilityAttributesWrapper);
@@ -98,6 +111,13 @@ namespace Subsystem
                     logger.WriteLine($"  WeaponAttributes: {weaponAttributesName}");
 
                     var weaponAttributes = entityType.Get<WeaponAttributes>(weaponAttributesName);
+                    if (weaponAttributes == null)
+                    {
+                        logger.WriteLine($"ERROR: Weapon name {weaponAttributesName} not found");
+                        logger.WriteLine();
+                        continue;
+                    }
+
                     var weaponAttributesWrapper = new WeaponAttributesWrapper(weaponAttributes);
 
                     ApplyWeaponAttributesPatch(weaponAttributesPatch, weaponAttributesWrapper);
