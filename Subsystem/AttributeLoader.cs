@@ -124,7 +124,8 @@ namespace Subsystem
                 }
             }
 
-            Debug.Log($"[SUBSYSTEM] Applied attributes patch:\n\n{logger.GetLog()}");
+            File.WriteAllText(Path.Combine(Application.dataPath, "Subsystem.log"), logger.GetLog());
+            Debug.Log($"[SUBSYSTEM] Applied attributes patch. See Subsystem.log for details.");
         }
 
         private void applyPropertyPatch<TProperty>(TProperty? newValue, Expression<Func<TProperty>> expression) where TProperty : struct
