@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Patch\AbilityAttributesPatch.cs" />
+    <Compile Include="Patch\WeaponModifierInfoPatch.cs" />
     <Compile Include="Wrappers\AbilityAttributesWrapper.cs" />
     <Compile Include="AttributeLoader.cs" />
     <Compile Include="Patch\AttributesPatch.cs" />
@@ -67,6 +68,7 @@
     <Compile Include="Wrappers\UnitMovementAttributesWrapper.cs" />
     <Compile Include="Patch\WeaponAttributesPatch.cs" />
     <Compile Include="Wrappers\WeaponAttributesWrapper.cs" />
+    <Compile Include="Wrappers\WeaponModifierInfoWrapper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

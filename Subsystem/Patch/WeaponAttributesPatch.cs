@@ -1,4 +1,5 @@
 ﻿using BBI.Game.Data;
+using System.Collections.Generic;
 
 namespace Subsystem.Patch
 {
@@ -29,6 +30,7 @@ namespace Subsystem.Patch
         public RevealTrigger? RevealTriggers { get; set; }
         public UnitStatusAttackingTrigger? UnitStatusAttackingTriggers { get; set; }
         public WeaponTargetStyle? TargetStyle { get; set; }
+        public Dictionary<string, WeaponModifierInfoPatch> Modifiers { get; set; } = new Dictionary<string, WeaponModifierInfoPatch>();
         public AOEFalloffType? AreaOfEffectFalloffType { get; set; }
         public double? AreaOfEffectRadius { get; set; }
         public bool? ExcludeWeaponOwnerFromAreaOfEffect { get; set; }

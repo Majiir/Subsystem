@@ -343,6 +343,9 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.RevealTriggers, () => weaponAttributesWrapper.RevealTriggers);
             applyPropertyPatch(weaponAttributesPatch.UnitStatusAttackingTriggers, () => weaponAttributesWrapper.UnitStatusAttackingTriggers);
             applyPropertyPatch(weaponAttributesPatch.TargetStyle, () => weaponAttributesWrapper.TargetStyle);
+
+            applyWeaponModifiers(weaponAttributesPatch, weaponAttributesWrapper);
+
             applyPropertyPatch(weaponAttributesPatch.AreaOfEffectFalloffType, () => weaponAttributesWrapper.AreaOfEffectFalloffType);
             applyPropertyPatch(weaponAttributesPatch.AreaOfEffectRadius, () => weaponAttributesWrapper.AreaOfEffectRadius, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(weaponAttributesPatch.ExcludeWeaponOwnerFromAreaOfEffect, () => weaponAttributesWrapper.ExcludeWeaponOwnerFromAreaOfEffect);
@@ -357,6 +360,71 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsTargetAlignment, () => weaponAttributesWrapper.StatusEffectsTargetAlignment);
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsExcludeTargetType, () => weaponAttributesWrapper.StatusEffectsExcludeTargetType);
             applyPropertyPatch(weaponAttributesPatch.ActiveStatusEffectsIndex, () => weaponAttributesWrapper.ActiveStatusEffectsIndex);
+        }
+
+        private void applyWeaponModifiers(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
+        {
+            var modifiers = weaponAttributesWrapper.Modifiers.ToList();
+
+            foreach (var kvp in weaponAttributesPatch.Modifiers.OrderBy(x => x.Key))
+            {
+                if (!int.TryParse(kvp.Key, out var index))
+                {
+                    logger.Log($"ERROR: Non-integer modifier key: {kvp.Key}");
+                    break;
+                }
+
+                var modifierPatch = kvp.Value;
+
+                using (logger.BeginScope($"WeaponModifierInfo: {index}"))
+                {
+                    if (index < modifiers.Count)
+                    {
+                        if (modifierPatch.Remove)
+                        {
+                            logger.Log("(removed)");
+                            modifiers[index] = null;
+                            continue;
+                        }
+
+                        var modifierWrapper = new WeaponModifierInfoWrapper(modifiers[index]);
+
+                        ApplyWeaponModifierInfoPatch(modifierPatch, modifierWrapper);
+
+                        modifiers[index] = modifierWrapper;
+                    }
+                    else if (index == modifiers.Count)
+                    {
+                        if (modifierPatch.Remove)
+                        {
+                            logger.Log("WARNING: Remove flag set for non-existant entry");
+                            continue;
+                        }
+
+                        logger.Log("(created)");
+                        var modifierWrapper = new WeaponModifierInfoWrapper();
+
+                        ApplyWeaponModifierInfoPatch(modifierPatch, modifierWrapper);
+
+                        modifiers.Add(modifierWrapper);
+                    }
+                    else // if (index > modifiers.Count)
+                    {
+                        logger.Log("ERROR: Non-consecutive index");
+                        continue;
+                    }
+                }
+            }
+
+            weaponAttributesWrapper.Modifiers = modifiers.Where(x => x != null).ToArray();
+        }
+
+        public void ApplyWeaponModifierInfoPatch(WeaponModifierInfoPatch weaponModifierInfoPatch, WeaponModifierInfoWrapper weaponModifierInfoWrapper)
+        {
+            applyPropertyPatch(weaponModifierInfoPatch.TargetClass, () => weaponModifierInfoWrapper.TargetClass);
+            applyPropertyPatch(weaponModifierInfoPatch.ClassOperator, () => weaponModifierInfoWrapper.ClassOperator);
+            applyPropertyPatch(weaponModifierInfoPatch.Modifier, () => weaponModifierInfoWrapper.Modifier);
+            applyPropertyPatch(weaponModifierInfoPatch.Amount, () => weaponModifierInfoWrapper.Amount);
         }
 
         private void applyRangeAttributes(WeaponRange weaponRange, RangeBasedWeaponAttributesPatch rangePatch, WeaponAttributesWrapper weaponWrapper)
