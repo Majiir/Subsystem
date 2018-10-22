@@ -182,25 +182,24 @@ namespace Subsystem
             var unitAttributes = entityType.Get<UnitAttributes>();
             if (unitAttributes != null)
             {
-                var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
-
-                var weaponLoadout = unitAttributesWrapper.WeaponLoadout.Select(weaponBinding =>
-                    new WeaponBinding(
-                        weaponID: weaponBinding.WeaponID,
-                        weaponBindingIndex: weaponBinding.WeaponBindingIndex,
-                        weapon: weaponAttributesWrapper,
-                        ammoID: weaponBinding.AmmoID,
-                        turretIndex: weaponBinding.TurretIndex,
-                        defaultTurretAngleOffsetRadians: weaponBinding.DefaultTurretAngleOffsetRadians,
-                        disabledOnSpawn: weaponBinding.DisabledOnSpawn,
-                        weaponOffsetFromUnitOrigin: weaponBinding.OffsetFromUnitCenterInLocalSpace,
-                        showAmmoOnHUD: weaponBinding.ShowAmmoOnHUD
-                    )
-                );
-
-                unitAttributesWrapper.WeaponLoadout = weaponLoadout.ToArray();
-
-                entityType.Replace(unitAttributes, unitAttributesWrapper);
+                for (var i = 0; i < unitAttributes.WeaponLoadout.Length; i++)
+                {
+                    var weaponBinding = unitAttributes.WeaponLoadout[i];
+                    if (weaponBinding.Weapon.Name == weaponAttributesWrapper.Name)
+                    {
+                        unitAttributes.WeaponLoadout[i] = new WeaponBinding(
+                            weaponID: weaponBinding.WeaponID,
+                            weaponBindingIndex: weaponBinding.WeaponBindingIndex,
+                            weapon: weaponAttributesWrapper,
+                            ammoID: weaponBinding.AmmoID,
+                            turretIndex: weaponBinding.TurretIndex,
+                            defaultTurretAngleOffsetRadians: weaponBinding.DefaultTurretAngleOffsetRadians,
+                            disabledOnSpawn: weaponBinding.DisabledOnSpawn,
+                            weaponOffsetFromUnitOrigin: weaponBinding.OffsetFromUnitCenterInLocalSpace,
+                            showAmmoOnHUD: weaponBinding.ShowAmmoOnHUD
+                        );
+                    }
+                }
             }
         }
 
