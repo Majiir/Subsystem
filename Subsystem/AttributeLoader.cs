@@ -13,7 +13,7 @@ namespace Subsystem
 {
     public class AttributeLoader
     {
-        private readonly TextWriter logger = new StringWriter();
+        private readonly StringLogger logger = new StringLogger();
 
         public static void LoadAttributes(EntityTypeCollection entityTypeCollection)
         {
@@ -41,96 +41,90 @@ namespace Subsystem
                 var entityTypePatch = kvp.Value;
 
                 var entityType = entityTypeCollection.GetEntityType(entityTypeName);
-                if (entityType == null)
+
+                using (logger.BeginScope($"EntityType: {entityTypeName}"))
                 {
-                    logger.WriteLine($"NOTICE: EntityType {entityTypeName} Not found");
-                    logger.WriteLine();
-                    continue;
-                }
-
-                logger.WriteLine($"EntityType: {entityTypeName}");
-                logger.WriteLine();
-
-                if (entityTypePatch.UnitAttributes != null)
-                {
-                    logger.WriteLine($"  UnitAttributes:");
-
-                    var unitAttributes = entityType.Get<UnitAttributes>();
-                    var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
-
-                    ApplyUnitAttributesPatch(entityTypePatch.UnitAttributes, unitAttributesWrapper);
-
-                    logger.WriteLine();
-
-                    entityType.Replace(unitAttributes, unitAttributesWrapper);
-                }
-
-                if (entityTypePatch.ResearchItemAttributes != null)
-                {
-                    logger.WriteLine($"  ResearchItemAttributes:");
-
-                    var researchItemAttributes = entityType.Get<ResearchItemAttributes>();
-                    var researchItemAttributesWrapper = new ResearchItemAttributesWrapper(researchItemAttributes);
-
-                    ApplyResearchItemAttributesPatch(entityTypePatch.ResearchItemAttributes, researchItemAttributesWrapper);
-
-                    logger.WriteLine();
-
-                    entityType.Replace(researchItemAttributes, researchItemAttributesWrapper);
-                }
-
-                foreach (var kvp2 in entityTypePatch.AbilityAttributes)
-                {
-                    var abilityAttributesName = kvp2.Key;
-                    var abilityAttributesPatch = kvp2.Value;
-
-                    logger.WriteLine($"  AbilityAttributes: {abilityAttributesName}");
-
-                    var abilityAttributes = entityType.Get<AbilityAttributes>(abilityAttributesName);
-                    if (abilityAttributes == null)
+                    if (entityType == null)
                     {
-                        logger.WriteLine($"ERROR: Ability name {abilityAttributesName} not found");
-                        logger.WriteLine();
+                        logger.Log($"NOTICE: EntityType not found");
                         continue;
                     }
 
-                    var abilityAttributesWrapper = new AbilityAttributesWrapper(abilityAttributes);
-
-                    ApplyAbilityAttributesPatch(abilityAttributesPatch, abilityAttributesWrapper);
-
-                    logger.WriteLine();
-
-                    entityType.Replace(abilityAttributes, abilityAttributesWrapper);
-                }
-
-                foreach (var kvp2 in entityTypePatch.WeaponAttributes)
-                {
-                    var weaponAttributesName = kvp2.Key;
-                    var weaponAttributesPatch = kvp2.Value;
-
-                    logger.WriteLine($"  WeaponAttributes: {weaponAttributesName}");
-
-                    var weaponAttributes = entityType.Get<WeaponAttributes>(weaponAttributesName);
-                    if (weaponAttributes == null)
+                    if (entityTypePatch.UnitAttributes != null)
                     {
-                        logger.WriteLine($"ERROR: Weapon name {weaponAttributesName} not found");
-                        logger.WriteLine();
-                        continue;
+                        using (logger.BeginScope($"UnitAttributes:"))
+                        {
+                            var unitAttributes = entityType.Get<UnitAttributes>();
+                            var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
+
+                            ApplyUnitAttributesPatch(entityTypePatch.UnitAttributes, unitAttributesWrapper);
+
+                            entityType.Replace(unitAttributes, unitAttributesWrapper);
+                        }
                     }
 
-                    var weaponAttributesWrapper = new WeaponAttributesWrapper(weaponAttributes);
+                    if (entityTypePatch.ResearchItemAttributes != null)
+                    {
+                        using (logger.BeginScope($"ResearchItemAttributes:"))
+                        {
+                            var researchItemAttributes = entityType.Get<ResearchItemAttributes>();
+                            var researchItemAttributesWrapper = new ResearchItemAttributesWrapper(researchItemAttributes);
 
-                    ApplyWeaponAttributesPatch(weaponAttributesPatch, weaponAttributesWrapper);
+                            ApplyResearchItemAttributesPatch(entityTypePatch.ResearchItemAttributes, researchItemAttributesWrapper);
 
-                    logger.WriteLine();
+                            entityType.Replace(researchItemAttributes, researchItemAttributesWrapper);
+                        }
+                    }
 
-                    entityType.Replace(weaponAttributes, weaponAttributesWrapper);
+                    foreach (var kvp2 in entityTypePatch.AbilityAttributes)
+                    {
+                        var abilityAttributesName = kvp2.Key;
+                        var abilityAttributesPatch = kvp2.Value;
 
-                    rebindWeaponAttributes(entityType, weaponAttributesWrapper);
+                        using (logger.BeginScope($"AbilityAttributes: {abilityAttributesName}"))
+                        {
+                            var abilityAttributes = entityType.Get<AbilityAttributes>(abilityAttributesName);
+                            if (abilityAttributes == null)
+                            {
+                                logger.Log($"ERROR: AbilityAttributes not found");
+                                continue;
+                            }
+
+                            var abilityAttributesWrapper = new AbilityAttributesWrapper(abilityAttributes);
+
+                            ApplyAbilityAttributesPatch(abilityAttributesPatch, abilityAttributesWrapper);
+
+                            entityType.Replace(abilityAttributes, abilityAttributesWrapper);
+                        }
+                    }
+
+                    foreach (var kvp2 in entityTypePatch.WeaponAttributes)
+                    {
+                        var weaponAttributesName = kvp2.Key;
+                        var weaponAttributesPatch = kvp2.Value;
+
+                        using (logger.BeginScope($"WeaponAttributes: {weaponAttributesName}"))
+                        {
+                            var weaponAttributes = entityType.Get<WeaponAttributes>(weaponAttributesName);
+                            if (weaponAttributes == null)
+                            {
+                                logger.Log($"ERROR: WeaponAttributes not found");
+                                continue;
+                            }
+
+                            var weaponAttributesWrapper = new WeaponAttributesWrapper(weaponAttributes);
+
+                            ApplyWeaponAttributesPatch(weaponAttributesPatch, weaponAttributesWrapper);
+
+                            entityType.Replace(weaponAttributes, weaponAttributesWrapper);
+
+                            rebindWeaponAttributes(entityType, weaponAttributesWrapper);
+                        }
+                    }
                 }
             }
 
-            Debug.Log($"[SUBSYSTEM] Applied attributes patch:\n\n{logger.ToString()}");
+            Debug.Log($"[SUBSYSTEM] Applied attributes patch:\n\n{logger.GetLog()}");
         }
 
         private void applyPropertyPatch<TProperty>(TProperty? newValue, Expression<Func<TProperty>> expression) where TProperty : struct
@@ -174,7 +168,7 @@ namespace Subsystem
             var oldValue = accessor.Get();
             accessor.Set(value);
 
-            logger.WriteLine($"    {accessor.Name}: {value} (was: {oldValue})");
+            logger.Log($"{accessor.Name}: {value} (was: {oldValue})");
         }
 
         private static void rebindWeaponAttributes(EntityTypeAttributes entityType, WeaponAttributesWrapper weaponAttributesWrapper)
@@ -344,17 +338,20 @@ namespace Subsystem
 
             var range = ranges.SingleOrDefault(r => r.Range == weaponRange);
 
-            var rangeWrapper = range != null
-                ? new RangeBasedWeaponAttributesWrapper(range)
-                : new RangeBasedWeaponAttributesWrapper(weaponRange);
+            using (logger.BeginScope($"RangeAttributes{weaponRange}:"))
+            {
+                var rangeWrapper = range != null
+                    ? new RangeBasedWeaponAttributesWrapper(range)
+                    : new RangeBasedWeaponAttributesWrapper(weaponRange);
 
-            ApplyRangeBasedWeaponAttributesPatch(rangePatch, rangeWrapper);
+                ApplyRangeBasedWeaponAttributesPatch(rangePatch, rangeWrapper);
 
-            weaponWrapper.Ranges =
-                ranges.Where(r => r.Range < weaponRange)
-                .Concat(new[] { rangeWrapper })
-                .Concat(ranges.Where(r => r.Range > weaponRange))
-                .ToArray();
+                weaponWrapper.Ranges =
+                    ranges.Where(r => r.Range < weaponRange)
+                    .Concat(new[] { rangeWrapper })
+                    .Concat(ranges.Where(r => r.Range > weaponRange))
+                    .ToArray();
+            }
         }
 
         public void ApplyRangeBasedWeaponAttributesPatch(RangeBasedWeaponAttributesPatch rangePatch, RangeBasedWeaponAttributesWrapper rangeWrapper)

@@ -54,6 +54,7 @@
     <Compile Include="RangeBasedWeaponAttributesWrapper.cs" />
     <Compile Include="ResearchItemAttributesPatch.cs" />
     <Compile Include="ResearchItemAttributesWrapper.cs" />
+    <Compile Include="StringLogger.cs" />
     <Compile Include="UnitAttributesPatch.cs" />
     <Compile Include="UnitAttributesWrapper.cs" />
     <Compile Include="WeaponAttributesPatch.cs" />
