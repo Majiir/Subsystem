@@ -396,6 +396,48 @@ namespace Subsystem
         {
             applyPropertyPatch(unitHangarPatch.AlignmentTime, () => unitHangarWrapper.AlignmentTime, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(unitHangarPatch.ApproachTime, () => unitHangarWrapper.ApproachTime, x => Fixed64.UnsafeFromDouble(x));
+
+            for (var i = 0; i < unitHangarWrapper.HangarBays.Length; i++)
+            {
+                var hangarBay = unitHangarWrapper.HangarBays[i];
+                if (unitHangarPatch.HangarBays.TryGetValue(hangarBay.Name, out var hangarBayPatch))
+                {
+                    using (logger.BeginScope($"HangarBay: {hangarBay.Name}"))
+                    {
+                        var hangarBayWrapper = new HangarBayWrapper(hangarBay);
+                        ApplyHangarBayPatch(hangarBayPatch, hangarBayWrapper);
+                        unitHangarWrapper.HangarBays[i] = hangarBayWrapper;
+                    }
+                }
+            }
+        }
+
+        public void ApplyHangarBayPatch(HangarBayPatch hangarBayPatch, HangarBayWrapper hangarBayWrapper)
+        {
+            applyPropertyPatch(hangarBayPatch.EntityType, () => hangarBayWrapper.EntityType);
+            applyPropertyPatch(hangarBayPatch.MaxCount, () => hangarBayWrapper.MaxCount);
+            applyPropertyPatch(hangarBayPatch.UsesStrictClassMatching, () => hangarBayWrapper.UsesStrictClassMatching);
+            applyPropertyPatch(hangarBayPatch.HoldsClass, () => hangarBayWrapper.HoldsClass);
+            applyPropertyPatch(hangarBayPatch.SlotCount, () => hangarBayWrapper.SlotCount);
+            applyPropertyPatch(hangarBayPatch.UndockPresCtrlBone, () => hangarBayWrapper.UndockPresCtrlBone);
+            applyPropertyPatch(hangarBayPatch.UndockTotalSeconds, () => hangarBayWrapper.UndockTotalSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockAnimationSeconds, () => hangarBayWrapper.UndockAnimationSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockSlotStaggerSeconds, () => hangarBayWrapper.UndockSlotStaggerSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockXOffsetPos, () => hangarBayWrapper.UndockXOffsetPos, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockYOffsetPos, () => hangarBayWrapper.UndockYOffsetPos, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockSlotXSeperationOffset, () => hangarBayWrapper.UndockSlotXSeperationOffset, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DegreesOffsetUndockAngle, () => hangarBayWrapper.DegreesOffsetUndockAngle, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockSpeed, () => hangarBayWrapper.UndockSpeed, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DockPresCtrlBone, () => hangarBayWrapper.DockPresCtrlBone);
+            applyPropertyPatch(hangarBayPatch.DockBringInAnimationSeconds, () => hangarBayWrapper.DockBringInAnimationSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DockSlotStaggerSeconds, () => hangarBayWrapper.DockSlotStaggerSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.MaxDamageCoolingSeconds, () => hangarBayWrapper.MaxDamageCoolingSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.MaxPayloadCoolingSeconds, () => hangarBayWrapper.MaxPayloadCoolingSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.MinDockCoolingSeconds, () => hangarBayWrapper.MinDockCoolingSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DockReceivingXOffset, () => hangarBayWrapper.DockReceivingXOffset, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DockReceivingYOffset, () => hangarBayWrapper.DockReceivingYOffset, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DoorAnimationSeconds, () => hangarBayWrapper.DoorAnimationSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockLiftTime, () => hangarBayWrapper.UndockLiftTime, x => Fixed64.UnsafeFromDouble(x));
         }
     }
 }
