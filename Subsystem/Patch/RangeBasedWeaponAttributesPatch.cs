@@ -1,4 +1,4 @@
-﻿namespace Subsystem
+﻿namespace Subsystem.Patch
 {
     public class RangeBasedWeaponAttributesPatch
     {

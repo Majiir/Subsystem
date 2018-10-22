@@ -3,7 +3,7 @@ using BBI.Core.Utility.FixedPoint;
 using BBI.Game.Data;
 using System.Collections.Generic;
 
-namespace Subsystem
+namespace Subsystem.Wrappers
 {
     public class UnitAttributesWrapper : NamedObjectBase, UnitAttributes
     {

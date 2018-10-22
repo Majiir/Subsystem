@@ -1,5 +1,5 @@
 ﻿using BBI.Game.Data;
-namespace Subsystem
+namespace Subsystem.Patch
 {
     public class WeaponAttributesPatch
     {

@@ -1,7 +1,7 @@
 ﻿using BBI.Core.Utility.FixedPoint;
 using BBI.Game.Data;
 
-namespace Subsystem
+namespace Subsystem.Wrappers
 {
     public class RangeBasedWeaponAttributesWrapper : RangeBasedWeaponAttributes
     {

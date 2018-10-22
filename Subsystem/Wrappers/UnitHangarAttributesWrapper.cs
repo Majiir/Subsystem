@@ -2,7 +2,7 @@
 using BBI.Game.Data;
 using System.Linq;
 
-namespace Subsystem
+namespace Subsystem.Wrappers
 {
     public class UnitHangarAttributesWrapper : UnitHangarAttributes
     {

@@ -3,6 +3,8 @@ using BBI.Core.Data;
 using BBI.Core.Utility.FixedPoint;
 using BBI.Game.Data;
 using LitJson;
+using Subsystem.Patch;
+using Subsystem.Wrappers;
 using System;
 using System.IO;
 using System.Linq;
