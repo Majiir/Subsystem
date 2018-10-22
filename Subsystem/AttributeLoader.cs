@@ -349,9 +349,17 @@ namespace Subsystem
                 }
                 else
                 {
-                    var rangeWrapper = range != null
-                        ? new RangeBasedWeaponAttributesWrapper(range)
-                        : new RangeBasedWeaponAttributesWrapper(weaponRange);
+                    RangeBasedWeaponAttributesWrapper rangeWrapper;
+
+                    if (range != null)
+                    {
+                        rangeWrapper = new RangeBasedWeaponAttributesWrapper(range);
+                    }
+                    else
+                    {
+                        logger.Log("(created)");
+                        rangeWrapper = new RangeBasedWeaponAttributesWrapper(weaponRange);
+                    }
 
                     ApplyRangeBasedWeaponAttributesPatch(rangePatch, rangeWrapper);
 
