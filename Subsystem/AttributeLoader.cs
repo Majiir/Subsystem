@@ -76,6 +76,19 @@ namespace Subsystem
                         }
                     }
 
+                    if (entityTypePatch.UnitHangarAttributes != null)
+                    {
+                        using (logger.BeginScope($"UnitHangarAttributes:"))
+                        {
+                            var unitHangarAttributes = entityType.Get<UnitHangarAttributes>();
+                            var unitHangarAttributesWrapper = new UnitHangarAttributesWrapper(unitHangarAttributes);
+
+                            ApplyUnitHangarAttributesPatch(entityTypePatch.UnitHangarAttributes, unitHangarAttributesWrapper);
+
+                            entityType.Replace(unitHangarAttributes, unitHangarAttributesWrapper);
+                        }
+                    }
+
                     foreach (var kvp2 in entityTypePatch.AbilityAttributes)
                     {
                         var abilityAttributesName = kvp2.Key;
@@ -377,6 +390,12 @@ namespace Subsystem
             applyPropertyPatch(rangePatch.Accuracy, () => rangeWrapper.Accuracy, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(rangePatch.Distance, () => rangeWrapper.Distance, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(rangePatch.MinDistance, () => rangeWrapper.MinDistance, x => Fixed64.UnsafeFromDouble(x));
+        }
+
+        public void ApplyUnitHangarAttributesPatch(UnitHangarAttributesPatch unitHangarPatch, UnitHangarAttributesWrapper unitHangarWrapper)
+        {
+            applyPropertyPatch(unitHangarPatch.AlignmentTime, () => unitHangarWrapper.AlignmentTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitHangarPatch.ApproachTime, () => unitHangarWrapper.ApproachTime, x => Fixed64.UnsafeFromDouble(x));
         }
     }
 }

@@ -57,6 +57,8 @@
     <Compile Include="StringLogger.cs" />
     <Compile Include="UnitAttributesPatch.cs" />
     <Compile Include="UnitAttributesWrapper.cs" />
+    <Compile Include="UnitHangarAttributesPatch.cs" />
+    <Compile Include="UnitHangarAttributesWrapper.cs" />
     <Compile Include="WeaponAttributesPatch.cs" />
     <Compile Include="WeaponAttributesWrapper.cs" />
   </ItemGroup>
