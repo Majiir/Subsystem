@@ -337,22 +337,31 @@ namespace Subsystem
 
             var ranges = weaponWrapper.Ranges;
 
+            var newRanges = ranges.Where(r => r.Range < weaponRange);
+
             var range = ranges.SingleOrDefault(r => r.Range == weaponRange);
 
             using (logger.BeginScope($"RangeAttributes{weaponRange}:"))
             {
-                var rangeWrapper = range != null
-                    ? new RangeBasedWeaponAttributesWrapper(range)
-                    : new RangeBasedWeaponAttributesWrapper(weaponRange);
+                if (rangePatch.Remove)
+                {
+                    logger.Log("(removed)");
+                }
+                else
+                {
+                    var rangeWrapper = range != null
+                        ? new RangeBasedWeaponAttributesWrapper(range)
+                        : new RangeBasedWeaponAttributesWrapper(weaponRange);
 
-                ApplyRangeBasedWeaponAttributesPatch(rangePatch, rangeWrapper);
+                    ApplyRangeBasedWeaponAttributesPatch(rangePatch, rangeWrapper);
 
-                weaponWrapper.Ranges =
-                    ranges.Where(r => r.Range < weaponRange)
-                    .Concat(new[] { rangeWrapper })
-                    .Concat(ranges.Where(r => r.Range > weaponRange))
-                    .ToArray();
+                    newRanges = newRanges.Concat(new[] { rangeWrapper });
+                }
             }
+
+            newRanges = newRanges.Concat(ranges.Where(r => r.Range > weaponRange));
+
+            weaponWrapper.Ranges = newRanges.ToArray();
         }
 
         public void ApplyRangeBasedWeaponAttributesPatch(RangeBasedWeaponAttributesPatch rangePatch, RangeBasedWeaponAttributesWrapper rangeWrapper)
