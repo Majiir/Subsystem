@@ -1,5 +1,6 @@
 ﻿using BBI.Game.Data;
-namespace Subsystem
+
+namespace Subsystem.Patch
 {
     public class WeaponAttributesPatch
     {
@@ -33,6 +34,9 @@ namespace Subsystem
         public bool? ExcludeWeaponOwnerFromAreaOfEffect { get; set; }
         public double? FriendlyFireDamageScalar { get; set; }
         public double? WeaponOwnerFriendlyFireDamageScalar { get; set; }
+        public RangeBasedWeaponAttributesPatch RangeAttributesShort { get; set; }
+        public RangeBasedWeaponAttributesPatch RangeAttributesMedium { get; set; }
+        public RangeBasedWeaponAttributesPatch RangeAttributesLong { get; set; }
         public string ProjectileEntityTypeToSpawn { get; set; }
         public AbilityTargetAlignment? StatusEffectsTargetAlignment { get; set; }
         public UnitClass? StatusEffectsExcludeTargetType { get; set; }

@@ -3,25 +3,39 @@ using BBI.Core.Data;
 using BBI.Core.Utility.FixedPoint;
 using BBI.Game.Data;
 using LitJson;
+using Subsystem.Patch;
+using Subsystem.Wrappers;
+using System;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using UnityEngine;
 
 namespace Subsystem
 {
     public class AttributeLoader
     {
+        private readonly StringLogger logger = new StringLogger();
+
         public static void LoadAttributes(EntityTypeCollection entityTypeCollection)
         {
-            var jsonPath = Path.Combine(Application.dataPath, "patch.json");
-            var json = File.ReadAllText(jsonPath);
+            try
+            {
+                var jsonPath = Path.Combine(Application.dataPath, "patch.json");
+                var json = File.ReadAllText(jsonPath);
 
-            var attributesPatch = JsonMapper.ToObject<AttributesPatch>(json);
+                var attributesPatch = JsonMapper.ToObject<AttributesPatch>(json);
 
-            ApplyAttributesPatch(entityTypeCollection, attributesPatch);
+                var loader = new AttributeLoader();
+                loader.ApplyAttributesPatch(entityTypeCollection, attributesPatch);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[SUBSYSTEM] Error applying patch file: {e}");
+            }
         }
 
-        public static void ApplyAttributesPatch(EntityTypeCollection entityTypeCollection, AttributesPatch attributesPatch)
+        public void ApplyAttributesPatch(EntityTypeCollection entityTypeCollection, AttributesPatch attributesPatch)
         {
             foreach (var kvp in attributesPatch.Entities)
             {
@@ -30,54 +44,160 @@ namespace Subsystem
 
                 var entityType = entityTypeCollection.GetEntityType(entityTypeName);
 
-                if (entityTypePatch.UnitAttributes != null)
+                using (logger.BeginScope($"EntityType: {entityTypeName}"))
                 {
-                    var unitAttributes = entityType.Get<UnitAttributes>();
-                    var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
+                    if (entityType == null)
+                    {
+                        logger.Log($"NOTICE: EntityType not found");
+                        continue;
+                    }
 
-                    ApplyUnitAttributesPatch(entityTypePatch.UnitAttributes, unitAttributesWrapper);
+                    if (entityTypePatch.UnitAttributes != null)
+                    {
+                        using (logger.BeginScope($"UnitAttributes:"))
+                        {
+                            var unitAttributes = entityType.Get<UnitAttributes>();
+                            var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
 
-                    entityType.Replace(unitAttributes, unitAttributesWrapper);
-                }
+                            ApplyUnitAttributesPatch(entityTypePatch.UnitAttributes, unitAttributesWrapper);
 
-                if (entityTypePatch.ResearchItemAttributes != null)
-                {
-                    var researchItemAttributes = entityType.Get<ResearchItemAttributes>();
-                    var researchItemAttributesWrapper = new ResearchItemAttributesWrapper(researchItemAttributes);
+                            entityType.Replace(unitAttributes, unitAttributesWrapper);
+                        }
+                    }
 
-                    ApplyResearchItemAttributesPatch(entityTypePatch.ResearchItemAttributes, researchItemAttributesWrapper);
+                    if (entityTypePatch.ResearchItemAttributes != null)
+                    {
+                        using (logger.BeginScope($"ResearchItemAttributes:"))
+                        {
+                            var researchItemAttributes = entityType.Get<ResearchItemAttributes>();
+                            var researchItemAttributesWrapper = new ResearchItemAttributesWrapper(researchItemAttributes);
 
-                    entityType.Replace(researchItemAttributes, researchItemAttributesWrapper);
-                }
+                            ApplyResearchItemAttributesPatch(entityTypePatch.ResearchItemAttributes, researchItemAttributesWrapper);
 
-                foreach (var kvp2 in entityTypePatch.AbilityAttributes)
-                {
-                    var abilityAttributesName = kvp2.Key;
-                    var abilityAttributesPatch = kvp2.Value;
+                            entityType.Replace(researchItemAttributes, researchItemAttributesWrapper);
+                        }
+                    }
 
-                    var abilityAttributes = entityType.Get<AbilityAttributes>(abilityAttributesName);
-                    var abilityAttributesWrapper = new AbilityAttributesWrapper(abilityAttributes);
+                    if (entityTypePatch.UnitHangarAttributes != null)
+                    {
+                        using (logger.BeginScope($"UnitHangarAttributes:"))
+                        {
+                            var unitHangarAttributes = entityType.Get<UnitHangarAttributes>();
+                            var unitHangarAttributesWrapper = new UnitHangarAttributesWrapper(unitHangarAttributes);
 
-                    ApplyAbilityAttributesPatch(abilityAttributesPatch, abilityAttributesWrapper);
+                            ApplyUnitHangarAttributesPatch(entityTypePatch.UnitHangarAttributes, unitHangarAttributesWrapper);
 
-                    entityType.Replace(abilityAttributes, abilityAttributesWrapper);
-                }
+                            entityType.Replace(unitHangarAttributes, unitHangarAttributesWrapper);
+                        }
+                    }
 
-                foreach (var kvp2 in entityTypePatch.WeaponAttributes)
-                {
-                    var weaponAttributesName = kvp2.Key;
-                    var weaponAttributesPatch = kvp2.Value;
+                    if (entityTypePatch.UnitMovementAttributes != null)
+                    {
+                        using (logger.BeginScope($"UnitMovementAttributes:"))
+                        {
+                            var unitMovementAttributes = entityType.Get<UnitMovementAttributes>();
+                            var unitMovementAttributesWrapper = new UnitMovementAttributesWrapper(unitMovementAttributes);
 
-                    var weaponAttributes = entityType.Get<WeaponAttributes>(weaponAttributesName);
-                    var weaponAttributesWrapper = new WeaponAttributesWrapper(weaponAttributes);
+                            ApplyUnitMovementAttributesPatch(entityTypePatch.UnitMovementAttributes, unitMovementAttributesWrapper);
 
-                    ApplyWeaponAttributesPatch(weaponAttributesPatch, weaponAttributesWrapper);
+                            entityType.Replace(unitMovementAttributes, unitMovementAttributesWrapper);
+                        }
+                    }
 
-                    entityType.Replace(weaponAttributes, weaponAttributesWrapper);
+                    foreach (var kvp2 in entityTypePatch.AbilityAttributes)
+                    {
+                        var abilityAttributesName = kvp2.Key;
+                        var abilityAttributesPatch = kvp2.Value;
 
-                    rebindWeaponAttributes(entityType, weaponAttributesWrapper);
+                        using (logger.BeginScope($"AbilityAttributes: {abilityAttributesName}"))
+                        {
+                            var abilityAttributes = entityType.Get<AbilityAttributes>(abilityAttributesName);
+                            if (abilityAttributes == null)
+                            {
+                                logger.Log($"ERROR: AbilityAttributes not found");
+                                continue;
+                            }
+
+                            var abilityAttributesWrapper = new AbilityAttributesWrapper(abilityAttributes);
+
+                            ApplyAbilityAttributesPatch(abilityAttributesPatch, abilityAttributesWrapper);
+
+                            entityType.Replace(abilityAttributes, abilityAttributesWrapper);
+                        }
+                    }
+
+                    foreach (var kvp2 in entityTypePatch.WeaponAttributes)
+                    {
+                        var weaponAttributesName = kvp2.Key;
+                        var weaponAttributesPatch = kvp2.Value;
+
+                        using (logger.BeginScope($"WeaponAttributes: {weaponAttributesName}"))
+                        {
+                            var weaponAttributes = entityType.Get<WeaponAttributes>(weaponAttributesName);
+                            if (weaponAttributes == null)
+                            {
+                                logger.Log($"ERROR: WeaponAttributes not found");
+                                continue;
+                            }
+
+                            var weaponAttributesWrapper = new WeaponAttributesWrapper(weaponAttributes);
+
+                            ApplyWeaponAttributesPatch(weaponAttributesPatch, weaponAttributesWrapper);
+
+                            entityType.Replace(weaponAttributes, weaponAttributesWrapper);
+
+                            rebindWeaponAttributes(entityType, weaponAttributesWrapper);
+                        }
+                    }
                 }
             }
+
+            File.WriteAllText(Path.Combine(Application.dataPath, "Subsystem.log"), logger.GetLog());
+            Debug.Log($"[SUBSYSTEM] Applied attributes patch. See Subsystem.log for details.");
+        }
+
+        private void applyPropertyPatch<TProperty>(TProperty? newValue, Expression<Func<TProperty>> expression) where TProperty : struct
+        {
+            if (newValue.HasValue)
+            {
+                setProperty(newValue.Value, expression, x => x);
+            }
+        }
+
+        private void applyPropertyPatch<TProperty>(TProperty newValue, Expression<Func<TProperty>> expression) where TProperty : class
+        {
+            if (newValue != null)
+            {
+                setProperty(newValue, expression, x => x);
+            }
+        }
+
+        private void applyPropertyPatch<TValue, TProperty>(TValue? newValue, Expression<Func<TProperty>> expression, Func<TValue, TProperty> projection) where TValue : struct
+        {
+            if (newValue.HasValue)
+            {
+                setProperty(newValue.Value, expression, projection);
+            }
+        }
+
+        private void applyPropertyPatch<TValue, TProperty>(TValue newValue, Expression<Func<TProperty>> expression, Func<TValue, TProperty> projection) where TValue : class
+        {
+            if (newValue != null)
+            {
+                setProperty(newValue, expression, projection);
+            }
+        }
+
+        private void setProperty<TValue, TProperty>(TValue newValue, Expression<Func<TProperty>> expression, Func<TValue, TProperty> projection)
+        {
+            var value = projection(newValue);
+
+            var accessor = new PropertyAccessor<TProperty>(expression);
+
+            var oldValue = accessor.Get();
+            accessor.Set(value);
+
+            logger.Log($"{accessor.Name}: {value} (was: {oldValue})");
         }
 
         private static void rebindWeaponAttributes(EntityTypeAttributes entityType, WeaponAttributesWrapper weaponAttributesWrapper)
@@ -85,157 +205,292 @@ namespace Subsystem
             var unitAttributes = entityType.Get<UnitAttributes>();
             if (unitAttributes != null)
             {
-                var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
-
-                var weaponLoadout = unitAttributesWrapper.WeaponLoadout.Select(weaponBinding =>
-                    new WeaponBinding(
-                        weaponID: weaponBinding.WeaponID,
-                        weaponBindingIndex: weaponBinding.WeaponBindingIndex,
-                        weapon: weaponAttributesWrapper,
-                        ammoID: weaponBinding.AmmoID,
-                        turretIndex: weaponBinding.TurretIndex,
-                        defaultTurretAngleOffsetRadians: weaponBinding.DefaultTurretAngleOffsetRadians,
-                        disabledOnSpawn: weaponBinding.DisabledOnSpawn,
-                        weaponOffsetFromUnitOrigin: weaponBinding.OffsetFromUnitCenterInLocalSpace,
-                        showAmmoOnHUD: weaponBinding.ShowAmmoOnHUD
-                    )
-                );
-
-                unitAttributesWrapper.WeaponLoadout = weaponLoadout.ToArray();
-
-                entityType.Replace(unitAttributes, unitAttributesWrapper);
+                for (var i = 0; i < unitAttributes.WeaponLoadout.Length; i++)
+                {
+                    var weaponBinding = unitAttributes.WeaponLoadout[i];
+                    if (weaponBinding.Weapon.Name == weaponAttributesWrapper.Name)
+                    {
+                        unitAttributes.WeaponLoadout[i] = new WeaponBinding(
+                            weaponID: weaponBinding.WeaponID,
+                            weaponBindingIndex: weaponBinding.WeaponBindingIndex,
+                            weapon: weaponAttributesWrapper,
+                            ammoID: weaponBinding.AmmoID,
+                            turretIndex: weaponBinding.TurretIndex,
+                            defaultTurretAngleOffsetRadians: weaponBinding.DefaultTurretAngleOffsetRadians,
+                            disabledOnSpawn: weaponBinding.DisabledOnSpawn,
+                            weaponOffsetFromUnitOrigin: weaponBinding.OffsetFromUnitCenterInLocalSpace,
+                            showAmmoOnHUD: weaponBinding.ShowAmmoOnHUD
+                        );
+                    }
+                }
             }
         }
 
-        public static void ApplyUnitAttributesPatch(UnitAttributesPatch unitAttributesPatch, UnitAttributesWrapper unitAttributesWrapper)
+        public void ApplyUnitAttributesPatch(UnitAttributesPatch unitAttributesPatch, UnitAttributesWrapper unitAttributesWrapper)
         {
-            if (unitAttributesPatch.Class.HasValue) { unitAttributesWrapper.Class = unitAttributesPatch.Class.Value; }
-            if (unitAttributesPatch.SelectionFlags.HasValue) { unitAttributesWrapper.SelectionFlags = unitAttributesPatch.SelectionFlags.Value; }
-            if (unitAttributesPatch.MaxHealth.HasValue) { unitAttributesWrapper.MaxHealth = unitAttributesPatch.MaxHealth.Value; }
-            if (unitAttributesPatch.Armour.HasValue) { unitAttributesWrapper.Armour = unitAttributesPatch.Armour.Value; }
-            if (unitAttributesPatch.DamageReceivedMultiplier.HasValue) { unitAttributesWrapper.DamageReceivedMultiplier = Fixed64.UnsafeFromDouble(unitAttributesPatch.DamageReceivedMultiplier.Value); }
-            if (unitAttributesPatch.AccuracyReceivedMultiplier.HasValue) { unitAttributesWrapper.AccuracyReceivedMultiplier = Fixed64.UnsafeFromDouble(unitAttributesPatch.AccuracyReceivedMultiplier.Value); }
-            if (unitAttributesPatch.PopCapCost.HasValue) { unitAttributesWrapper.PopCapCost = unitAttributesPatch.PopCapCost.Value; }
-            if (unitAttributesPatch.ExperienceValue.HasValue) { unitAttributesWrapper.ExperienceValue = unitAttributesPatch.ExperienceValue.Value; }
-            if (unitAttributesPatch.ProductionTime.HasValue) { unitAttributesWrapper.ProductionTime = Fixed64.UnsafeFromDouble(unitAttributesPatch.ProductionTime.Value); }
-            if (unitAttributesPatch.AggroRange.HasValue) { unitAttributesWrapper.AggroRange = Fixed64.UnsafeFromDouble(unitAttributesPatch.AggroRange.Value); }
-            if (unitAttributesPatch.LeashRange.HasValue) { unitAttributesWrapper.LeashRange = Fixed64.UnsafeFromDouble(unitAttributesPatch.LeashRange.Value); }
-            if (unitAttributesPatch.AlertRange.HasValue) { unitAttributesWrapper.AlertRange = Fixed64.UnsafeFromDouble(unitAttributesPatch.AlertRange.Value); }
-            if (unitAttributesPatch.RepairPickupRange.HasValue) { unitAttributesWrapper.RepairPickupRange = Fixed64.UnsafeFromDouble(unitAttributesPatch.RepairPickupRange.Value); }
-            if (unitAttributesPatch.UnitPositionReaggroConditions.HasValue) { unitAttributesWrapper.UnitPositionReaggroConditions = unitAttributesPatch.UnitPositionReaggroConditions.Value; }
-            if (unitAttributesPatch.LeashPositionReaggroConditions.HasValue) { unitAttributesWrapper.LeashPositionReaggroConditions = unitAttributesPatch.LeashPositionReaggroConditions.Value; }
-            if (unitAttributesPatch.LeadPriority.HasValue) { unitAttributesWrapper.LeadPriority = unitAttributesPatch.LeadPriority.Value; }
-            if (unitAttributesPatch.Selectable.HasValue) { unitAttributesWrapper.Selectable = unitAttributesPatch.Selectable.Value; }
-            if (unitAttributesPatch.Controllable.HasValue) { unitAttributesWrapper.Controllable = unitAttributesPatch.Controllable.Value; }
-            if (unitAttributesPatch.Targetable.HasValue) { unitAttributesWrapper.Targetable = unitAttributesPatch.Targetable.Value; }
-            if (unitAttributesPatch.NonAutoTargetable.HasValue) { unitAttributesWrapper.NonAutoTargetable = unitAttributesPatch.NonAutoTargetable.Value; }
-            if (unitAttributesPatch.RetireTargetable.HasValue) { unitAttributesWrapper.RetireTargetable = unitAttributesPatch.RetireTargetable.Value; }
-            if (unitAttributesPatch.HackedReturnTargetable.HasValue) { unitAttributesWrapper.HackedReturnTargetable = unitAttributesPatch.HackedReturnTargetable.Value; }
-            if (unitAttributesPatch.HackableProperties.HasValue) { unitAttributesWrapper.HackableProperties = unitAttributesPatch.HackableProperties.Value; }
-            if (unitAttributesPatch.ExcludeFromUnitStats.HasValue) { unitAttributesWrapper.ExcludeFromUnitStats = unitAttributesPatch.ExcludeFromUnitStats.Value; }
-            if (unitAttributesPatch.BlocksLOF.HasValue) { unitAttributesWrapper.BlocksLOF = unitAttributesPatch.BlocksLOF.Value; }
-            if (unitAttributesPatch.WorldHeightOffset.HasValue) { unitAttributesWrapper.WorldHeightOffset = Fixed64.UnsafeFromDouble(unitAttributesPatch.WorldHeightOffset.Value); }
-            if (unitAttributesPatch.DoNotPersist.HasValue) { unitAttributesWrapper.DoNotPersist = unitAttributesPatch.DoNotPersist.Value; }
-            if (unitAttributesPatch.LevelBound.HasValue) { unitAttributesWrapper.LevelBound = unitAttributesPatch.LevelBound.Value; }
-            if (unitAttributesPatch.StartsInHangar.HasValue) { unitAttributesWrapper.StartsInHangar = unitAttributesPatch.StartsInHangar.Value; }
-            if (unitAttributesPatch.SensorRadius.HasValue) { unitAttributesWrapper.SensorRadius = Fixed64.UnsafeFromDouble(unitAttributesPatch.SensorRadius.Value); }
-            if (unitAttributesPatch.ContactRadius.HasValue) { unitAttributesWrapper.ContactRadius = Fixed64.UnsafeFromDouble(unitAttributesPatch.ContactRadius.Value); }
-            if (unitAttributesPatch.NumProductionQueues.HasValue) { unitAttributesWrapper.NumProductionQueues = unitAttributesPatch.NumProductionQueues.Value; }
-            if (unitAttributesPatch.ProductionQueueDepth.HasValue) { unitAttributesWrapper.ProductionQueueDepth = unitAttributesPatch.ProductionQueueDepth.Value; }
-            if (unitAttributesPatch.ShowProductionQueues.HasValue) { unitAttributesWrapper.ShowProductionQueues = unitAttributesPatch.ShowProductionQueues.Value; }
-            if (unitAttributesPatch.NoTextNotifications.HasValue) { unitAttributesWrapper.NoTextNotifications = unitAttributesPatch.NoTextNotifications.Value; }
-            if (unitAttributesPatch.NotificationFlags.HasValue) { unitAttributesWrapper.NotificationFlags = unitAttributesPatch.NotificationFlags.Value; }
-            if (unitAttributesPatch.FireRateDisplay.HasValue) { unitAttributesWrapper.FireRateDisplay = unitAttributesPatch.FireRateDisplay.Value; }
-            if (unitAttributesPatch.PriorityAsTarget.HasValue) { unitAttributesWrapper.PriorityAsTarget = Fixed64.UnsafeFromDouble(unitAttributesPatch.PriorityAsTarget.Value); }
+            applyPropertyPatch(unitAttributesPatch.Class, () => unitAttributesWrapper.Class);
+            applyPropertyPatch(unitAttributesPatch.SelectionFlags, () => unitAttributesWrapper.SelectionFlags);
+            applyPropertyPatch(unitAttributesPatch.MaxHealth, () => unitAttributesWrapper.MaxHealth);
+            applyPropertyPatch(unitAttributesPatch.Armour, () => unitAttributesWrapper.Armour);
+            applyPropertyPatch(unitAttributesPatch.DamageReceivedMultiplier, () => unitAttributesWrapper.DamageReceivedMultiplier, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitAttributesPatch.AccuracyReceivedMultiplier, () => unitAttributesWrapper.AccuracyReceivedMultiplier, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitAttributesPatch.PopCapCost, () => unitAttributesWrapper.PopCapCost);
+            applyPropertyPatch(unitAttributesPatch.ExperienceValue, () => unitAttributesWrapper.ExperienceValue);
+            applyPropertyPatch(unitAttributesPatch.ProductionTime, () => unitAttributesWrapper.ProductionTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitAttributesPatch.AggroRange, () => unitAttributesWrapper.AggroRange, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitAttributesPatch.LeashRange, () => unitAttributesWrapper.LeashRange, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitAttributesPatch.AlertRange, () => unitAttributesWrapper.AlertRange, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitAttributesPatch.RepairPickupRange, () => unitAttributesWrapper.RepairPickupRange, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitAttributesPatch.UnitPositionReaggroConditions, () => unitAttributesWrapper.UnitPositionReaggroConditions);
+            applyPropertyPatch(unitAttributesPatch.LeashPositionReaggroConditions, () => unitAttributesWrapper.LeashPositionReaggroConditions);
+            applyPropertyPatch(unitAttributesPatch.LeadPriority, () => unitAttributesWrapper.LeadPriority);
+            applyPropertyPatch(unitAttributesPatch.Selectable, () => unitAttributesWrapper.Selectable);
+            applyPropertyPatch(unitAttributesPatch.Controllable, () => unitAttributesWrapper.Controllable);
+            applyPropertyPatch(unitAttributesPatch.Targetable, () => unitAttributesWrapper.Targetable);
+            applyPropertyPatch(unitAttributesPatch.NonAutoTargetable, () => unitAttributesWrapper.NonAutoTargetable);
+            applyPropertyPatch(unitAttributesPatch.RetireTargetable, () => unitAttributesWrapper.RetireTargetable);
+            applyPropertyPatch(unitAttributesPatch.HackedReturnTargetable, () => unitAttributesWrapper.HackedReturnTargetable);
+            applyPropertyPatch(unitAttributesPatch.HackableProperties, () => unitAttributesWrapper.HackableProperties);
+            applyPropertyPatch(unitAttributesPatch.ExcludeFromUnitStats, () => unitAttributesWrapper.ExcludeFromUnitStats);
+            applyPropertyPatch(unitAttributesPatch.BlocksLOF, () => unitAttributesWrapper.BlocksLOF);
+            applyPropertyPatch(unitAttributesPatch.WorldHeightOffset, () => unitAttributesWrapper.WorldHeightOffset, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitAttributesPatch.DoNotPersist, () => unitAttributesWrapper.DoNotPersist);
+            applyPropertyPatch(unitAttributesPatch.LevelBound, () => unitAttributesWrapper.LevelBound);
+            applyPropertyPatch(unitAttributesPatch.StartsInHangar, () => unitAttributesWrapper.StartsInHangar);
+            applyPropertyPatch(unitAttributesPatch.SensorRadius, () => unitAttributesWrapper.SensorRadius, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitAttributesPatch.ContactRadius, () => unitAttributesWrapper.ContactRadius, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitAttributesPatch.NumProductionQueues, () => unitAttributesWrapper.NumProductionQueues);
+            applyPropertyPatch(unitAttributesPatch.ProductionQueueDepth, () => unitAttributesWrapper.ProductionQueueDepth);
+            applyPropertyPatch(unitAttributesPatch.ShowProductionQueues, () => unitAttributesWrapper.ShowProductionQueues);
+            applyPropertyPatch(unitAttributesPatch.NoTextNotifications, () => unitAttributesWrapper.NoTextNotifications);
+            applyPropertyPatch(unitAttributesPatch.NotificationFlags, () => unitAttributesWrapper.NotificationFlags);
+            applyPropertyPatch(unitAttributesPatch.FireRateDisplay, () => unitAttributesWrapper.FireRateDisplay);
+            applyPropertyPatch(unitAttributesPatch.PriorityAsTarget, () => unitAttributesWrapper.PriorityAsTarget, x => Fixed64.UnsafeFromDouble(x));
 
-            unitAttributesWrapper.ThreatData = new ThreatData
-            {
-                BaseThreat = unitAttributesPatch.BaseThreat ?? unitAttributesWrapper.ThreatData.BaseThreat,
-                Tier = unitAttributesPatch.ThreatTier ?? unitAttributesWrapper.ThreatData.Tier,
-            };
+            applyPropertyPatch(unitAttributesPatch.BaseThreat, () => unitAttributesWrapper.ThreatData.BaseThreat);
+            applyPropertyPatch(unitAttributesPatch.ThreatTier, () => unitAttributesWrapper.ThreatData.Tier);
 
-            if (unitAttributesPatch.ThreatCounters != null) { unitAttributesWrapper.ThreatCounters = unitAttributesPatch.ThreatCounters.Select(x => new ThreatCounter(x)); }
-            if (unitAttributesPatch.ThreatCounteredBys != null) { unitAttributesWrapper.ThreatCounteredBys = unitAttributesPatch.ThreatCounteredBys.Select(x => new ThreatCounter(x)); }
+            applyPropertyPatch(unitAttributesPatch.ThreatCounters, () => unitAttributesWrapper.ThreatCounters, c => c.Select(x => new ThreatCounter(x)));
+            applyPropertyPatch(unitAttributesPatch.ThreatCounteredBys, () => unitAttributesWrapper.ThreatCounteredBys, c => c.Select(x => new ThreatCounter(x)));
 
-            if (unitAttributesPatch.Resource1Cost.HasValue) { unitAttributesWrapper.Resource1Cost = unitAttributesPatch.Resource1Cost.Value; }
-            if (unitAttributesPatch.Resource2Cost.HasValue) { unitAttributesWrapper.Resource2Cost = unitAttributesPatch.Resource2Cost.Value; }
+            applyPropertyPatch(unitAttributesPatch.Resource1Cost, () => unitAttributesWrapper.Resource1Cost);
+            applyPropertyPatch(unitAttributesPatch.Resource2Cost, () => unitAttributesWrapper.Resource2Cost);
         }
 
-        public static void ApplyResearchItemAttributesPatch(ResearchItemAttributesPatch researchItemAttributesPatch, ResearchItemAttributesWrapper researchItemAttributesWrapper)
+        public void ApplyResearchItemAttributesPatch(ResearchItemAttributesPatch researchItemAttributesPatch, ResearchItemAttributesWrapper researchItemAttributesWrapper)
         {
-            if (researchItemAttributesPatch.TypeOfResearch.HasValue) { researchItemAttributesWrapper.TypeOfResearch = researchItemAttributesPatch.TypeOfResearch.Value; }
-            if (researchItemAttributesPatch.IconSpriteName != null) { researchItemAttributesWrapper.IconSpriteName = researchItemAttributesPatch.IconSpriteName; }
-            if (researchItemAttributesPatch.LocalizedResearchTitleStringID != null) { researchItemAttributesWrapper.LocalizedResearchTitleStringID = researchItemAttributesPatch.LocalizedResearchTitleStringID; }
-            if (researchItemAttributesPatch.LocalizedShortDescriptionStringID != null) { researchItemAttributesWrapper.LocalizedShortDescriptionStringID = researchItemAttributesPatch.LocalizedShortDescriptionStringID; }
-            if (researchItemAttributesPatch.LocalizedLongDescriptionStringID != null) { researchItemAttributesWrapper.LocalizedLongDescriptionStringID = researchItemAttributesPatch.LocalizedLongDescriptionStringID; }
-            if (researchItemAttributesPatch.ResearchTime.HasValue) { researchItemAttributesWrapper.ResearchTime = Fixed64.UnsafeFromDouble(researchItemAttributesPatch.ResearchTime.Value); }
-            if (researchItemAttributesPatch.Dependencies != null) { researchItemAttributesWrapper.Dependencies = researchItemAttributesPatch.Dependencies; }
-            if (researchItemAttributesPatch.ResearchVOCode != null) { researchItemAttributesWrapper.ResearchVOCode = researchItemAttributesPatch.ResearchVOCode; }
-            if (researchItemAttributesPatch.Resource1Cost.HasValue) { researchItemAttributesWrapper.Resource1Cost = researchItemAttributesPatch.Resource1Cost.Value; }
-            if (researchItemAttributesPatch.Resource2Cost.HasValue) { researchItemAttributesWrapper.Resource2Cost = researchItemAttributesPatch.Resource2Cost.Value; }
+            applyPropertyPatch(researchItemAttributesPatch.TypeOfResearch, () => researchItemAttributesWrapper.TypeOfResearch);
+            applyPropertyPatch(researchItemAttributesPatch.IconSpriteName, () => researchItemAttributesWrapper.IconSpriteName);
+            applyPropertyPatch(researchItemAttributesPatch.LocalizedResearchTitleStringID, () => researchItemAttributesWrapper.LocalizedResearchTitleStringID);
+            applyPropertyPatch(researchItemAttributesPatch.LocalizedShortDescriptionStringID, () => researchItemAttributesWrapper.LocalizedShortDescriptionStringID);
+            applyPropertyPatch(researchItemAttributesPatch.LocalizedLongDescriptionStringID, () => researchItemAttributesWrapper.LocalizedLongDescriptionStringID);
+            applyPropertyPatch(researchItemAttributesPatch.ResearchTime, () => researchItemAttributesWrapper.ResearchTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(researchItemAttributesPatch.Dependencies, () => researchItemAttributesWrapper.Dependencies);
+            applyPropertyPatch(researchItemAttributesPatch.ResearchVOCode, () => researchItemAttributesWrapper.ResearchVOCode);
+            applyPropertyPatch(researchItemAttributesPatch.Resource1Cost, () => researchItemAttributesWrapper.Resource1Cost);
+            applyPropertyPatch(researchItemAttributesPatch.Resource2Cost, () => researchItemAttributesWrapper.Resource2Cost);
         }
 
-        public static void ApplyAbilityAttributesPatch(AbilityAttributesPatch abilityAttributesPatch, AbilityAttributesWrapper abilityAttributesWrapper)
+        public void ApplyAbilityAttributesPatch(AbilityAttributesPatch abilityAttributesPatch, AbilityAttributesWrapper abilityAttributesWrapper)
         {
-            if (abilityAttributesPatch.AbilityType.HasValue) { abilityAttributesWrapper.AbilityType = abilityAttributesPatch.AbilityType.Value; }
-            if (abilityAttributesPatch.TargetingType.HasValue) { abilityAttributesWrapper.TargetingType = abilityAttributesPatch.TargetingType.Value; }
-            if (abilityAttributesPatch.TargetAlignment.HasValue) { abilityAttributesWrapper.TargetAlignment = abilityAttributesPatch.TargetAlignment.Value; }
-            if (abilityAttributesPatch.AbilityMapTargetLayers.HasValue) { abilityAttributesWrapper.AbilityMapTargetLayers = abilityAttributesPatch.AbilityMapTargetLayers.Value; }
-            if (abilityAttributesPatch.GroundAutoTargetAlignment.HasValue) { abilityAttributesWrapper.GroundAutoTargetAlignment = abilityAttributesPatch.GroundAutoTargetAlignment.Value; }
-            if (abilityAttributesPatch.EdgeOfTargetShapeMinDistance.HasValue) { abilityAttributesWrapper.EdgeOfTargetShapeMinDistance = Fixed64.UnsafeFromDouble(abilityAttributesPatch.EdgeOfTargetShapeMinDistance.Value); }
-            if (abilityAttributesPatch.CasterMovesToTarget.HasValue) { abilityAttributesWrapper.CasterMovesToTarget = abilityAttributesPatch.CasterMovesToTarget.Value; }
-            if (abilityAttributesPatch.GroupActivationType.HasValue) { abilityAttributesWrapper.GroupActivationType = abilityAttributesPatch.GroupActivationType.Value; }
-            if (abilityAttributesPatch.StartsRemovedInGameMode.HasValue) { abilityAttributesWrapper.StartsRemovedInGameMode = abilityAttributesPatch.StartsRemovedInGameMode.Value; }
-            if (abilityAttributesPatch.CooldownTimeSecs.HasValue) { abilityAttributesWrapper.CooldownTimeSecs = Fixed64.UnsafeFromDouble(abilityAttributesPatch.CooldownTimeSecs.Value); }
-            if (abilityAttributesPatch.WarmupTimeSecs.HasValue) { abilityAttributesWrapper.WarmupTimeSecs = Fixed64.UnsafeFromDouble(abilityAttributesPatch.WarmupTimeSecs.Value); }
-            if (abilityAttributesPatch.SharedCooldownChannel.HasValue) { abilityAttributesWrapper.SharedCooldownChannel = abilityAttributesPatch.SharedCooldownChannel.Value; }
-            if (abilityAttributesPatch.SkipCastOnArrivalConditions.HasValue) { abilityAttributesWrapper.SkipCastOnArrivalConditions = abilityAttributesPatch.SkipCastOnArrivalConditions.Value; }
-            if (abilityAttributesPatch.IsToggleable.HasValue) { abilityAttributesWrapper.IsToggleable = abilityAttributesPatch.IsToggleable.Value; }
-            if (abilityAttributesPatch.CastOnDeath.HasValue) { abilityAttributesWrapper.CastOnDeath = abilityAttributesPatch.CastOnDeath.Value; }
+            applyPropertyPatch(abilityAttributesPatch.AbilityType, () => abilityAttributesWrapper.AbilityType);
+            applyPropertyPatch(abilityAttributesPatch.TargetingType, () => abilityAttributesWrapper.TargetingType);
+            applyPropertyPatch(abilityAttributesPatch.TargetAlignment, () => abilityAttributesWrapper.TargetAlignment);
+            applyPropertyPatch(abilityAttributesPatch.AbilityMapTargetLayers, () => abilityAttributesWrapper.AbilityMapTargetLayers);
+            applyPropertyPatch(abilityAttributesPatch.GroundAutoTargetAlignment, () => abilityAttributesWrapper.GroundAutoTargetAlignment);
+            applyPropertyPatch(abilityAttributesPatch.EdgeOfTargetShapeMinDistance, () => abilityAttributesWrapper.EdgeOfTargetShapeMinDistance, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(abilityAttributesPatch.CasterMovesToTarget, () => abilityAttributesWrapper.CasterMovesToTarget);
+            applyPropertyPatch(abilityAttributesPatch.GroupActivationType, () => abilityAttributesWrapper.GroupActivationType);
+            applyPropertyPatch(abilityAttributesPatch.StartsRemovedInGameMode, () => abilityAttributesWrapper.StartsRemovedInGameMode);
+            applyPropertyPatch(abilityAttributesPatch.CooldownTimeSecs, () => abilityAttributesWrapper.CooldownTimeSecs, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(abilityAttributesPatch.WarmupTimeSecs, () => abilityAttributesWrapper.WarmupTimeSecs, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(abilityAttributesPatch.SharedCooldownChannel, () => abilityAttributesWrapper.SharedCooldownChannel);
+            applyPropertyPatch(abilityAttributesPatch.SkipCastOnArrivalConditions, () => abilityAttributesWrapper.SkipCastOnArrivalConditions);
+            applyPropertyPatch(abilityAttributesPatch.IsToggleable, () => abilityAttributesWrapper.IsToggleable);
+            applyPropertyPatch(abilityAttributesPatch.CastOnDeath, () => abilityAttributesWrapper.CastOnDeath);
 
             var cost = new CostAttributesWrapper(abilityAttributesWrapper.Cost);
             abilityAttributesWrapper.Cost = cost;
 
-            if (abilityAttributesPatch.Resource1Cost.HasValue) { cost.Resource1Cost = abilityAttributesPatch.Resource1Cost.Value; }
-            if (abilityAttributesPatch.Resource2Cost.HasValue) { cost.Resource2Cost = abilityAttributesPatch.Resource2Cost.Value; }
+            applyPropertyPatch(abilityAttributesPatch.Resource1Cost, () => cost.Resource1Cost);
+            applyPropertyPatch(abilityAttributesPatch.Resource2Cost, () => cost.Resource2Cost);
         }
 
-        public static void ApplyWeaponAttributesPatch(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
+        public void ApplyWeaponAttributesPatch(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
         {
-            if (weaponAttributesPatch.ExcludeFromAutoTargetAcquisition.HasValue) { weaponAttributesWrapper.ExcludeFromAutoTargetAcquisition = weaponAttributesPatch.ExcludeFromAutoTargetAcquisition.Value; }
-            if (weaponAttributesPatch.ExcludeFromAutoFire.HasValue) { weaponAttributesWrapper.ExcludeFromAutoFire = weaponAttributesPatch.ExcludeFromAutoFire.Value; }
-            if (weaponAttributesPatch.ExcludeFromHeightAdvantage.HasValue) { weaponAttributesWrapper.ExcludeFromHeightAdvantage = weaponAttributesPatch.ExcludeFromHeightAdvantage.Value; }
-            if (weaponAttributesPatch.DamageType.HasValue) { weaponAttributesWrapper.DamageType = weaponAttributesPatch.DamageType.Value; }
-            if (weaponAttributesPatch.IsTracer.HasValue) { weaponAttributesWrapper.IsTracer = weaponAttributesPatch.IsTracer.Value; }
-            if (weaponAttributesPatch.TracerSpeed.HasValue) { weaponAttributesWrapper.TracerSpeed = Fixed64.UnsafeFromDouble(weaponAttributesPatch.TracerSpeed.Value); }
-            if (weaponAttributesPatch.TracerLength.HasValue) { weaponAttributesWrapper.TracerLength = Fixed64.UnsafeFromDouble(weaponAttributesPatch.TracerLength.Value); }
-            if (weaponAttributesPatch.BaseDamagePerRound.HasValue) { weaponAttributesWrapper.BaseDamagePerRound = Fixed64.UnsafeFromDouble(weaponAttributesPatch.BaseDamagePerRound.Value); }
-            if (weaponAttributesPatch.BaseWreckDamagePerRound.HasValue) { weaponAttributesWrapper.BaseWreckDamagePerRound = Fixed64.UnsafeFromDouble(weaponAttributesPatch.BaseWreckDamagePerRound.Value); }
-            if (weaponAttributesPatch.FiringRecoil.HasValue) { weaponAttributesWrapper.FiringRecoil = weaponAttributesPatch.FiringRecoil.Value; }
-            if (weaponAttributesPatch.WindUpTimeMS.HasValue) { weaponAttributesWrapper.WindUpTimeMS = weaponAttributesPatch.WindUpTimeMS.Value; }
-            if (weaponAttributesPatch.RateOfFire.HasValue) { weaponAttributesWrapper.RateOfFire = weaponAttributesPatch.RateOfFire.Value; }
-            if (weaponAttributesPatch.NumberOfBursts.HasValue) { weaponAttributesWrapper.NumberOfBursts = weaponAttributesPatch.NumberOfBursts.Value; }
-            if (weaponAttributesPatch.DamagePacketsPerShot.HasValue) { weaponAttributesWrapper.DamagePacketsPerShot = weaponAttributesPatch.DamagePacketsPerShot.Value; }
-            if (weaponAttributesPatch.BurstPeriodMinTimeMS.HasValue) { weaponAttributesWrapper.BurstPeriodMinTimeMS = weaponAttributesPatch.BurstPeriodMinTimeMS.Value; }
-            if (weaponAttributesPatch.BurstPeriodMaxTimeMS.HasValue) { weaponAttributesWrapper.BurstPeriodMaxTimeMS = weaponAttributesPatch.BurstPeriodMaxTimeMS.Value; }
-            if (weaponAttributesPatch.CooldownTimeMS.HasValue) { weaponAttributesWrapper.CooldownTimeMS = weaponAttributesPatch.CooldownTimeMS.Value; }
-            if (weaponAttributesPatch.WindDownTimeMS.HasValue) { weaponAttributesWrapper.WindDownTimeMS = weaponAttributesPatch.WindDownTimeMS.Value; }
-            if (weaponAttributesPatch.ReloadTimeMS.HasValue) { weaponAttributesWrapper.ReloadTimeMS = weaponAttributesPatch.ReloadTimeMS.Value; }
-            if (weaponAttributesPatch.LineOfSightRequired.HasValue) { weaponAttributesWrapper.LineOfSightRequired = weaponAttributesPatch.LineOfSightRequired.Value; }
-            if (weaponAttributesPatch.LeadsTarget.HasValue) { weaponAttributesWrapper.LeadsTarget = weaponAttributesPatch.LeadsTarget.Value; }
-            if (weaponAttributesPatch.KillSkipsUnitDeathSequence.HasValue) { weaponAttributesWrapper.KillSkipsUnitDeathSequence = weaponAttributesPatch.KillSkipsUnitDeathSequence.Value; }
-            if (weaponAttributesPatch.RevealTriggers.HasValue) { weaponAttributesWrapper.RevealTriggers = weaponAttributesPatch.RevealTriggers.Value; }
-            if (weaponAttributesPatch.UnitStatusAttackingTriggers.HasValue) { weaponAttributesWrapper.UnitStatusAttackingTriggers = weaponAttributesPatch.UnitStatusAttackingTriggers.Value; }
-            if (weaponAttributesPatch.TargetStyle.HasValue) { weaponAttributesWrapper.TargetStyle = weaponAttributesPatch.TargetStyle.Value; }
-            if (weaponAttributesPatch.AreaOfEffectFalloffType.HasValue) { weaponAttributesWrapper.AreaOfEffectFalloffType = weaponAttributesPatch.AreaOfEffectFalloffType.Value; }
-            if (weaponAttributesPatch.AreaOfEffectRadius.HasValue) { weaponAttributesWrapper.AreaOfEffectRadius = Fixed64.UnsafeFromDouble(weaponAttributesPatch.AreaOfEffectRadius.Value); }
-            if (weaponAttributesPatch.ExcludeWeaponOwnerFromAreaOfEffect.HasValue) { weaponAttributesWrapper.ExcludeWeaponOwnerFromAreaOfEffect = weaponAttributesPatch.ExcludeWeaponOwnerFromAreaOfEffect.Value; }
-            if (weaponAttributesPatch.FriendlyFireDamageScalar.HasValue) { weaponAttributesWrapper.FriendlyFireDamageScalar = Fixed64.UnsafeFromDouble(weaponAttributesPatch.FriendlyFireDamageScalar.Value); }
-            if (weaponAttributesPatch.WeaponOwnerFriendlyFireDamageScalar.HasValue) { weaponAttributesWrapper.WeaponOwnerFriendlyFireDamageScalar = Fixed64.UnsafeFromDouble(weaponAttributesPatch.WeaponOwnerFriendlyFireDamageScalar.Value); }
-            if (weaponAttributesPatch.ProjectileEntityTypeToSpawn != null) { weaponAttributesWrapper.ProjectileEntityTypeToSpawn = weaponAttributesPatch.ProjectileEntityTypeToSpawn; }
-            if (weaponAttributesPatch.StatusEffectsTargetAlignment.HasValue) { weaponAttributesWrapper.StatusEffectsTargetAlignment = weaponAttributesPatch.StatusEffectsTargetAlignment.Value; }
-            if (weaponAttributesPatch.StatusEffectsExcludeTargetType.HasValue) { weaponAttributesWrapper.StatusEffectsExcludeTargetType = weaponAttributesPatch.StatusEffectsExcludeTargetType.Value; }
-            if (weaponAttributesPatch.ActiveStatusEffectsIndex.HasValue) { weaponAttributesWrapper.ActiveStatusEffectsIndex = weaponAttributesPatch.ActiveStatusEffectsIndex.Value; }
+            applyPropertyPatch(weaponAttributesPatch.ExcludeFromAutoTargetAcquisition, () => weaponAttributesWrapper.ExcludeFromAutoTargetAcquisition);
+            applyPropertyPatch(weaponAttributesPatch.ExcludeFromAutoFire, () => weaponAttributesWrapper.ExcludeFromAutoFire);
+            applyPropertyPatch(weaponAttributesPatch.ExcludeFromHeightAdvantage, () => weaponAttributesWrapper.ExcludeFromHeightAdvantage);
+            applyPropertyPatch(weaponAttributesPatch.DamageType, () => weaponAttributesWrapper.DamageType);
+            applyPropertyPatch(weaponAttributesPatch.IsTracer, () => weaponAttributesWrapper.IsTracer);
+            applyPropertyPatch(weaponAttributesPatch.TracerSpeed, () => weaponAttributesWrapper.TracerSpeed, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(weaponAttributesPatch.TracerLength, () => weaponAttributesWrapper.TracerLength, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(weaponAttributesPatch.BaseDamagePerRound, () => weaponAttributesWrapper.BaseDamagePerRound, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(weaponAttributesPatch.BaseWreckDamagePerRound, () => weaponAttributesWrapper.BaseWreckDamagePerRound, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(weaponAttributesPatch.FiringRecoil, () => weaponAttributesWrapper.FiringRecoil);
+            applyPropertyPatch(weaponAttributesPatch.WindUpTimeMS, () => weaponAttributesWrapper.WindUpTimeMS);
+            applyPropertyPatch(weaponAttributesPatch.RateOfFire, () => weaponAttributesWrapper.RateOfFire);
+            applyPropertyPatch(weaponAttributesPatch.NumberOfBursts, () => weaponAttributesWrapper.NumberOfBursts);
+            applyPropertyPatch(weaponAttributesPatch.DamagePacketsPerShot, () => weaponAttributesWrapper.DamagePacketsPerShot);
+            applyPropertyPatch(weaponAttributesPatch.BurstPeriodMinTimeMS, () => weaponAttributesWrapper.BurstPeriodMinTimeMS);
+            applyPropertyPatch(weaponAttributesPatch.BurstPeriodMaxTimeMS, () => weaponAttributesWrapper.BurstPeriodMaxTimeMS);
+            applyPropertyPatch(weaponAttributesPatch.CooldownTimeMS, () => weaponAttributesWrapper.CooldownTimeMS);
+            applyPropertyPatch(weaponAttributesPatch.WindDownTimeMS, () => weaponAttributesWrapper.WindDownTimeMS);
+            applyPropertyPatch(weaponAttributesPatch.ReloadTimeMS, () => weaponAttributesWrapper.ReloadTimeMS);
+            applyPropertyPatch(weaponAttributesPatch.LineOfSightRequired, () => weaponAttributesWrapper.LineOfSightRequired);
+            applyPropertyPatch(weaponAttributesPatch.LeadsTarget, () => weaponAttributesWrapper.LeadsTarget);
+            applyPropertyPatch(weaponAttributesPatch.KillSkipsUnitDeathSequence, () => weaponAttributesWrapper.KillSkipsUnitDeathSequence);
+            applyPropertyPatch(weaponAttributesPatch.RevealTriggers, () => weaponAttributesWrapper.RevealTriggers);
+            applyPropertyPatch(weaponAttributesPatch.UnitStatusAttackingTriggers, () => weaponAttributesWrapper.UnitStatusAttackingTriggers);
+            applyPropertyPatch(weaponAttributesPatch.TargetStyle, () => weaponAttributesWrapper.TargetStyle);
+            applyPropertyPatch(weaponAttributesPatch.AreaOfEffectFalloffType, () => weaponAttributesWrapper.AreaOfEffectFalloffType);
+            applyPropertyPatch(weaponAttributesPatch.AreaOfEffectRadius, () => weaponAttributesWrapper.AreaOfEffectRadius, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(weaponAttributesPatch.ExcludeWeaponOwnerFromAreaOfEffect, () => weaponAttributesWrapper.ExcludeWeaponOwnerFromAreaOfEffect);
+            applyPropertyPatch(weaponAttributesPatch.FriendlyFireDamageScalar, () => weaponAttributesWrapper.FriendlyFireDamageScalar, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(weaponAttributesPatch.WeaponOwnerFriendlyFireDamageScalar, () => weaponAttributesWrapper.WeaponOwnerFriendlyFireDamageScalar, x => Fixed64.UnsafeFromDouble(x));
+
+            applyRangeAttributes(WeaponRange.Short, weaponAttributesPatch.RangeAttributesShort, weaponAttributesWrapper);
+            applyRangeAttributes(WeaponRange.Medium, weaponAttributesPatch.RangeAttributesMedium, weaponAttributesWrapper);
+            applyRangeAttributes(WeaponRange.Long, weaponAttributesPatch.RangeAttributesLong, weaponAttributesWrapper);
+
+            applyPropertyPatch(weaponAttributesPatch.ProjectileEntityTypeToSpawn, () => weaponAttributesWrapper.ProjectileEntityTypeToSpawn);
+            applyPropertyPatch(weaponAttributesPatch.StatusEffectsTargetAlignment, () => weaponAttributesWrapper.StatusEffectsTargetAlignment);
+            applyPropertyPatch(weaponAttributesPatch.StatusEffectsExcludeTargetType, () => weaponAttributesWrapper.StatusEffectsExcludeTargetType);
+            applyPropertyPatch(weaponAttributesPatch.ActiveStatusEffectsIndex, () => weaponAttributesWrapper.ActiveStatusEffectsIndex);
+        }
+
+        private void applyRangeAttributes(WeaponRange weaponRange, RangeBasedWeaponAttributesPatch rangePatch, WeaponAttributesWrapper weaponWrapper)
+        {
+            if (rangePatch == null) { return; }
+
+            var ranges = weaponWrapper.Ranges;
+
+            var newRanges = ranges.Where(r => r.Range < weaponRange);
+
+            var range = ranges.SingleOrDefault(r => r.Range == weaponRange);
+
+            using (logger.BeginScope($"RangeAttributes{weaponRange}:"))
+            {
+                if (rangePatch.Remove)
+                {
+                    logger.Log("(removed)");
+                }
+                else
+                {
+                    RangeBasedWeaponAttributesWrapper rangeWrapper;
+
+                    if (range != null)
+                    {
+                        rangeWrapper = new RangeBasedWeaponAttributesWrapper(range);
+                    }
+                    else
+                    {
+                        logger.Log("(created)");
+                        rangeWrapper = new RangeBasedWeaponAttributesWrapper(weaponRange);
+                    }
+
+                    ApplyRangeBasedWeaponAttributesPatch(rangePatch, rangeWrapper);
+
+                    newRanges = newRanges.Concat(new[] { rangeWrapper });
+                }
+            }
+
+            newRanges = newRanges.Concat(ranges.Where(r => r.Range > weaponRange));
+
+            weaponWrapper.Ranges = newRanges.ToArray();
+        }
+
+        public void ApplyRangeBasedWeaponAttributesPatch(RangeBasedWeaponAttributesPatch rangePatch, RangeBasedWeaponAttributesWrapper rangeWrapper)
+        {
+            applyPropertyPatch(rangePatch.Accuracy, () => rangeWrapper.Accuracy, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(rangePatch.Distance, () => rangeWrapper.Distance, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(rangePatch.MinDistance, () => rangeWrapper.MinDistance, x => Fixed64.UnsafeFromDouble(x));
+        }
+
+        public void ApplyUnitHangarAttributesPatch(UnitHangarAttributesPatch unitHangarPatch, UnitHangarAttributesWrapper unitHangarWrapper)
+        {
+            applyPropertyPatch(unitHangarPatch.AlignmentTime, () => unitHangarWrapper.AlignmentTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitHangarPatch.ApproachTime, () => unitHangarWrapper.ApproachTime, x => Fixed64.UnsafeFromDouble(x));
+
+            for (var i = 0; i < unitHangarWrapper.HangarBays.Length; i++)
+            {
+                var hangarBay = unitHangarWrapper.HangarBays[i];
+                if (unitHangarPatch.HangarBays.TryGetValue(hangarBay.Name, out var hangarBayPatch))
+                {
+                    using (logger.BeginScope($"HangarBay: {hangarBay.Name}"))
+                    {
+                        var hangarBayWrapper = new HangarBayWrapper(hangarBay);
+                        ApplyHangarBayPatch(hangarBayPatch, hangarBayWrapper);
+                        unitHangarWrapper.HangarBays[i] = hangarBayWrapper;
+                    }
+                }
+            }
+        }
+
+        public void ApplyHangarBayPatch(HangarBayPatch hangarBayPatch, HangarBayWrapper hangarBayWrapper)
+        {
+            applyPropertyPatch(hangarBayPatch.EntityType, () => hangarBayWrapper.EntityType);
+            applyPropertyPatch(hangarBayPatch.MaxCount, () => hangarBayWrapper.MaxCount);
+            applyPropertyPatch(hangarBayPatch.UsesStrictClassMatching, () => hangarBayWrapper.UsesStrictClassMatching);
+            applyPropertyPatch(hangarBayPatch.HoldsClass, () => hangarBayWrapper.HoldsClass);
+            applyPropertyPatch(hangarBayPatch.SlotCount, () => hangarBayWrapper.SlotCount);
+            applyPropertyPatch(hangarBayPatch.UndockPresCtrlBone, () => hangarBayWrapper.UndockPresCtrlBone);
+            applyPropertyPatch(hangarBayPatch.UndockTotalSeconds, () => hangarBayWrapper.UndockTotalSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockAnimationSeconds, () => hangarBayWrapper.UndockAnimationSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockSlotStaggerSeconds, () => hangarBayWrapper.UndockSlotStaggerSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockXOffsetPos, () => hangarBayWrapper.UndockXOffsetPos, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockYOffsetPos, () => hangarBayWrapper.UndockYOffsetPos, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockSlotXSeperationOffset, () => hangarBayWrapper.UndockSlotXSeperationOffset, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DegreesOffsetUndockAngle, () => hangarBayWrapper.DegreesOffsetUndockAngle, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockSpeed, () => hangarBayWrapper.UndockSpeed, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DockPresCtrlBone, () => hangarBayWrapper.DockPresCtrlBone);
+            applyPropertyPatch(hangarBayPatch.DockBringInAnimationSeconds, () => hangarBayWrapper.DockBringInAnimationSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DockSlotStaggerSeconds, () => hangarBayWrapper.DockSlotStaggerSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.MaxDamageCoolingSeconds, () => hangarBayWrapper.MaxDamageCoolingSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.MaxPayloadCoolingSeconds, () => hangarBayWrapper.MaxPayloadCoolingSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.MinDockCoolingSeconds, () => hangarBayWrapper.MinDockCoolingSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DockReceivingXOffset, () => hangarBayWrapper.DockReceivingXOffset, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DockReceivingYOffset, () => hangarBayWrapper.DockReceivingYOffset, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.DoorAnimationSeconds, () => hangarBayWrapper.DoorAnimationSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(hangarBayPatch.UndockLiftTime, () => hangarBayWrapper.UndockLiftTime, x => Fixed64.UnsafeFromDouble(x));
+        }
+
+        public void ApplyUnitMovementAttributesPatch(UnitMovementAttributesPatch unitMovementAttributesPatch, UnitMovementAttributesWrapper unitMovementAttributesWrapper)
+        {
+            applyPropertyPatch(unitMovementAttributesPatch.DriveType, () => unitMovementAttributesWrapper.DriveType);
+
+            if (unitMovementAttributesPatch.Dynamics != null)
+            {
+                using (logger.BeginScope($"UnitDynamicsAttributes:"))
+                {
+                    var unitDynamicsAttributesWrapper = new UnitDynamicsAttributesWrapper(unitMovementAttributesWrapper.Dynamics);
+                    ApplyUnitDynamicsAttributesPatch(unitMovementAttributesPatch.Dynamics, unitDynamicsAttributesWrapper);
+                    unitMovementAttributesWrapper.Dynamics = unitDynamicsAttributesWrapper;
+                }
+            }
+        }
+
+        private void ApplyUnitDynamicsAttributesPatch(UnitDynamicsAttributesPatch unitDynamicsAttributesPatch, UnitDynamicsAttributesWrapper unitDynamicsAttributesWrapper)
+        {
+            applyPropertyPatch(unitDynamicsAttributesPatch.DriveType, () => unitDynamicsAttributesWrapper.DriveType);
+            applyPropertyPatch(unitDynamicsAttributesPatch.Length, () => unitDynamicsAttributesWrapper.Length, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.Width, () => unitDynamicsAttributesWrapper.Width, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MaxSpeed, () => unitDynamicsAttributesWrapper.MaxSpeed, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.ReverseFactor, () => unitDynamicsAttributesWrapper.ReverseFactor, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.AccelerationTime, () => unitDynamicsAttributesWrapper.AccelerationTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.BrakingTime, () => unitDynamicsAttributesWrapper.BrakingTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MaxSpeedTurnRadius, () => unitDynamicsAttributesWrapper.MaxSpeedTurnRadius, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MaxEaseIntoTurnTime, () => unitDynamicsAttributesWrapper.MaxEaseIntoTurnTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.DriftType, () => unitDynamicsAttributesWrapper.DriftType, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.ReverseDriftMultiplier, () => unitDynamicsAttributesWrapper.ReverseDriftMultiplier, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.DriftOvershootFactor, () => unitDynamicsAttributesWrapper.DriftOvershootFactor, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.FishTailingTimeIntervals, () => unitDynamicsAttributesWrapper.FishTailingTimeIntervals, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.FishTailControlRecover, () => unitDynamicsAttributesWrapper.FishTailControlRecover, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MinDriftSlipSpeed, () => unitDynamicsAttributesWrapper.MinDriftSlipSpeed, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MaxDriftRecoverTime, () => unitDynamicsAttributesWrapper.MaxDriftRecoverTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MinCruiseSpeed, () => unitDynamicsAttributesWrapper.MinCruiseSpeed, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.DeathDriftTime, () => unitDynamicsAttributesWrapper.DeathDriftTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.PermanentlyImmobile, () => unitDynamicsAttributesWrapper.PermanentlyImmobile);
         }
     }
 }
