@@ -61,6 +61,8 @@
     <Compile Include="UnitAttributesWrapper.cs" />
     <Compile Include="UnitHangarAttributesPatch.cs" />
     <Compile Include="UnitHangarAttributesWrapper.cs" />
+    <Compile Include="UnitMovementAttributesPatch.cs" />
+    <Compile Include="UnitMovementAttributesWrapper.cs" />
     <Compile Include="WeaponAttributesPatch.cs" />
     <Compile Include="WeaponAttributesWrapper.cs" />
   </ItemGroup>
