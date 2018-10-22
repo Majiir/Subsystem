@@ -456,6 +456,39 @@ namespace Subsystem
         public void ApplyUnitMovementAttributesPatch(UnitMovementAttributesPatch unitMovementAttributesPatch, UnitMovementAttributesWrapper unitMovementAttributesWrapper)
         {
             applyPropertyPatch(unitMovementAttributesPatch.DriveType, () => unitMovementAttributesWrapper.DriveType);
+
+            if (unitMovementAttributesPatch.Dynamics != null)
+            {
+                using (logger.BeginScope($"UnitDynamicsAttributes:"))
+                {
+                    var unitDynamicsAttributesWrapper = new UnitDynamicsAttributesWrapper(unitMovementAttributesWrapper.Dynamics);
+                    ApplyUnitDynamicsAttributesPatch(unitMovementAttributesPatch.Dynamics, unitDynamicsAttributesWrapper);
+                    unitMovementAttributesWrapper.Dynamics = unitDynamicsAttributesWrapper;
+                }
+            }
+        }
+
+        private void ApplyUnitDynamicsAttributesPatch(UnitDynamicsAttributesPatch unitDynamicsAttributesPatch, UnitDynamicsAttributesWrapper unitDynamicsAttributesWrapper)
+        {
+            applyPropertyPatch(unitDynamicsAttributesPatch.DriveType, () => unitDynamicsAttributesWrapper.DriveType);
+            applyPropertyPatch(unitDynamicsAttributesPatch.Length, () => unitDynamicsAttributesWrapper.Length, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.Width, () => unitDynamicsAttributesWrapper.Width, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MaxSpeed, () => unitDynamicsAttributesWrapper.MaxSpeed, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.ReverseFactor, () => unitDynamicsAttributesWrapper.ReverseFactor, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.AccelerationTime, () => unitDynamicsAttributesWrapper.AccelerationTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.BrakingTime, () => unitDynamicsAttributesWrapper.BrakingTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MaxSpeedTurnRadius, () => unitDynamicsAttributesWrapper.MaxSpeedTurnRadius, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MaxEaseIntoTurnTime, () => unitDynamicsAttributesWrapper.MaxEaseIntoTurnTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.DriftType, () => unitDynamicsAttributesWrapper.DriftType, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.ReverseDriftMultiplier, () => unitDynamicsAttributesWrapper.ReverseDriftMultiplier, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.DriftOvershootFactor, () => unitDynamicsAttributesWrapper.DriftOvershootFactor, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.FishTailingTimeIntervals, () => unitDynamicsAttributesWrapper.FishTailingTimeIntervals, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.FishTailControlRecover, () => unitDynamicsAttributesWrapper.FishTailControlRecover, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MinDriftSlipSpeed, () => unitDynamicsAttributesWrapper.MinDriftSlipSpeed, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MaxDriftRecoverTime, () => unitDynamicsAttributesWrapper.MaxDriftRecoverTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.MinCruiseSpeed, () => unitDynamicsAttributesWrapper.MinCruiseSpeed, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.DeathDriftTime, () => unitDynamicsAttributesWrapper.DeathDriftTime, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(unitDynamicsAttributesPatch.PermanentlyImmobile, () => unitDynamicsAttributesWrapper.PermanentlyImmobile);
         }
     }
 }

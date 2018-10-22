@@ -5,5 +5,6 @@ namespace Subsystem
     public class UnitMovementAttributesPatch
     {
         public UnitDriveType? DriveType { get; set; }
+        public UnitDynamicsAttributesPatch Dynamics { get; set; }
     }
 }
