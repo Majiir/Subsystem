@@ -1,5 +1,6 @@
 ﻿using BBI.Core.Utility.FixedPoint;
 using BBI.Game.Data;
+using System.Linq;
 
 namespace Subsystem
 {
@@ -7,7 +8,7 @@ namespace Subsystem
     {
         public UnitHangarAttributesWrapper(UnitHangarAttributes other)
         {
-            HangarBays = other.HangarBays;
+            HangarBays = other.HangarBays.ToArray();
             UnitDockingTriggers = other.UnitDockingTriggers;
             HangarDockingTriggers = other.HangarDockingTriggers;
             BoneResetTriggers = other.BoneResetTriggers;
