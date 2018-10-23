@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Patch\AbilityAttributesPatch.cs" />
+    <Compile Include="Patch\TurretAttributesPatch.cs" />
     <Compile Include="Patch\WeaponModifierInfoPatch.cs" />
     <Compile Include="Wrappers\AbilityAttributesWrapper.cs" />
     <Compile Include="AttributeLoader.cs" />
@@ -59,6 +60,7 @@
     <Compile Include="Wrappers\ResearchItemAttributesWrapper.cs" />
     <Compile Include="StringLogger.cs" />
     <Compile Include="Patch\UnitAttributesPatch.cs" />
+    <Compile Include="Wrappers\TurretAttributesWrapper.cs" />
     <Compile Include="Wrappers\UnitAttributesWrapper.cs" />
     <Compile Include="Patch\UnitDynamicsAttributesPatch.cs" />
     <Compile Include="Wrappers\UnitDynamicsAttributesWrapper.cs" />

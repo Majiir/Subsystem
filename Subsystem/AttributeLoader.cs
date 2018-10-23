@@ -352,6 +352,19 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.FriendlyFireDamageScalar, () => weaponAttributesWrapper.FriendlyFireDamageScalar, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(weaponAttributesPatch.WeaponOwnerFriendlyFireDamageScalar, () => weaponAttributesWrapper.WeaponOwnerFriendlyFireDamageScalar, x => Fixed64.UnsafeFromDouble(x));
 
+            if (weaponAttributesPatch.Turret != null)
+            {
+                using (logger.BeginScope($"Turret:"))
+                {
+                    var turret = weaponAttributesWrapper.Turret;
+                    var turretWrapper = new TurretAttributesWrapper(turret);
+
+                    ApplyTurretAttributesPatch(weaponAttributesPatch.Turret, turretWrapper);
+
+                    weaponAttributesWrapper.Turret = turretWrapper;
+                }
+            }
+
             applyRangeAttributes(WeaponRange.Short, weaponAttributesPatch.RangeAttributesShort, weaponAttributesWrapper);
             applyRangeAttributes(WeaponRange.Medium, weaponAttributesPatch.RangeAttributesMedium, weaponAttributesWrapper);
             applyRangeAttributes(WeaponRange.Long, weaponAttributesPatch.RangeAttributesLong, weaponAttributesWrapper);
@@ -473,6 +486,13 @@ namespace Subsystem
             applyPropertyPatch(rangePatch.Accuracy, () => rangeWrapper.Accuracy, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(rangePatch.Distance, () => rangeWrapper.Distance, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(rangePatch.MinDistance, () => rangeWrapper.MinDistance, x => Fixed64.UnsafeFromDouble(x));
+        }
+
+        public void ApplyTurretAttributesPatch(TurretAttributesPatch turretPatch, TurretAttributesWrapper turretWrapper)
+        {
+            applyPropertyPatch(turretPatch.FieldOfFire, () => turretWrapper.FieldOfFire, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(turretPatch.FieldOfView, () => turretWrapper.FieldOfView, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(turretPatch.RotationSpeed, () => turretWrapper.RotationSpeed, x => Fixed64.UnsafeFromDouble(x));
         }
 
         public void ApplyUnitHangarAttributesPatch(UnitHangarAttributesPatch unitHangarPatch, UnitHangarAttributesWrapper unitHangarWrapper)
