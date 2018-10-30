@@ -126,6 +126,28 @@ namespace Subsystem
                         }
                     }
 
+                    foreach (var kvp2 in entityTypePatch.StorageAttributes)
+                    {
+                        var storageAttributesName = kvp2.Key;
+                        var storageAttributesPatch = kvp2.Value;
+
+                        using (logger.BeginScope($"StorageAttributes: {storageAttributesName}"))
+                        {
+                            var storageAttributes = entityType.Get<StorageAttributes>(storageAttributesName);
+                            if (storageAttributes == null)
+                            {
+                                logger.Log($"ERROR: StorageAttributes not found");
+                                continue;
+                            }
+
+                            var storageAttributesWrapper = new StorageAttributesWrapper(storageAttributes);
+
+                            ApplyStorageAttributesPatch(storageAttributesPatch, storageAttributesWrapper);
+
+                            entityType.Replace(storageAttributes, storageAttributesWrapper);
+                        }
+                    }
+
                     foreach (var kvp2 in entityTypePatch.WeaponAttributes)
                     {
                         var weaponAttributesName = kvp2.Key;
@@ -314,6 +336,66 @@ namespace Subsystem
 
             applyPropertyPatch(abilityAttributesPatch.Resource1Cost, () => cost.Resource1Cost);
             applyPropertyPatch(abilityAttributesPatch.Resource2Cost, () => cost.Resource2Cost);
+        }
+
+        public void ApplyStorageAttributesPatch(StorageAttributesPatch storageAttributesPatch, StorageAttributesWrapper storageAttributesWrapper)
+        {
+            applyPropertyPatch(storageAttributesPatch.LinkToPlayerBank, () => storageAttributesWrapper.LinkToPlayerBank);
+            applyPropertyPatch(storageAttributesPatch.IsResourceController, () => storageAttributesWrapper.IsResourceController);
+
+            var loadout = storageAttributesWrapper.InventoryLoadout.ToList();
+
+            foreach (var kvp in storageAttributesPatch.InventoryLoadout)
+            {
+                var inventoryId = kvp.Key;
+                var inventoryPatch = kvp.Value;
+
+                using (logger.BeginScope($"InventoryBinding: {inventoryId}"))
+                {
+                    var index = loadout.FindIndex(b => b.InventoryID == inventoryId);
+
+                    InventoryAttributesWrapper inventoryAttributesWrapper;
+
+                    if (index < 0)
+                    {
+                        index = loadout.Count;
+
+                        var name = $"SUBSYSTEM-{storageAttributesWrapper.Name}-{inventoryId}";
+                        logger.Log($"(created InventoryAttributes: {name})");
+
+                        inventoryAttributesWrapper = new InventoryAttributesWrapper(
+                            name: name,
+                            inventoryId: inventoryId
+                        );
+                    }
+                    else
+                    {
+                        var inventoryBinding = loadout[index];
+                        inventoryAttributesWrapper = new InventoryAttributesWrapper(inventoryBinding.InventoryAttributes);
+                    }
+
+                    applyPropertyPatch(inventoryPatch.Capacity, () => inventoryAttributesWrapper.Capacity);
+                    applyPropertyPatch(inventoryPatch.HasUnlimitedCapacity, () => inventoryAttributesWrapper.HasUnlimitedCapacity);
+                    applyPropertyPatch(inventoryPatch.StartingAmount, () => inventoryAttributesWrapper.StartingAmount);
+
+                    var newBinding = new InventoryBinding(
+                        inventoryID: inventoryId,
+                        inventoryBindingIndex: index,
+                        inventoryAttributes: inventoryAttributesWrapper
+                    );
+
+                    if (index == loadout.Count)
+                    {
+                        loadout.Add(newBinding);
+                    }
+                    else
+                    {
+                        loadout[index] = newBinding;
+                    }
+                }
+            }
+
+            storageAttributesWrapper.InventoryLoadout = loadout.ToArray();
         }
 
         public void ApplyWeaponAttributesPatch(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)

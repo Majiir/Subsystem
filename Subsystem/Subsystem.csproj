@@ -43,6 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Patch\AbilityAttributesPatch.cs" />
+    <Compile Include="Patch\InventoryAttributesPatch.cs" />
+    <Compile Include="Patch\StorageAttributesPatch.cs" />
     <Compile Include="Patch\TurretAttributesPatch.cs" />
     <Compile Include="Patch\WeaponModifierInfoPatch.cs" />
     <Compile Include="Wrappers\AbilityAttributesWrapper.cs" />
@@ -57,11 +59,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyAccessor.cs" />
     <Compile Include="Patch\RangeBasedWeaponAttributesPatch.cs" />
+    <Compile Include="Wrappers\InventoryAttributesWrapper.cs" />
     <Compile Include="Wrappers\RangeBasedWeaponAttributesWrapper.cs" />
     <Compile Include="Patch\ResearchItemAttributesPatch.cs" />
     <Compile Include="Wrappers\ResearchItemAttributesWrapper.cs" />
     <Compile Include="StringLogger.cs" />
     <Compile Include="Patch\UnitAttributesPatch.cs" />
+    <Compile Include="Wrappers\StorageAttributesWrapper.cs" />
     <Compile Include="Wrappers\TurretAttributesWrapper.cs" />
     <Compile Include="Wrappers\UnitAttributesWrapper.cs" />
     <Compile Include="Patch\UnitDynamicsAttributesPatch.cs" />
