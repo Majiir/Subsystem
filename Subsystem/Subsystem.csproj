@@ -43,6 +43,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Patch\AbilityAttributesPatch.cs" />
+    <Compile Include="Patch\AttributeBuffPatch.cs" />
+    <Compile Include="Patch\ExperienceAttributesPatch.cs" />
+    <Compile Include="Patch\ExperienceLevelAttributesPatch.cs" />
     <Compile Include="Patch\InventoryAttributesPatch.cs" />
     <Compile Include="Patch\StorageAttributesPatch.cs" />
     <Compile Include="Patch\TurretAttributesPatch.cs" />
@@ -55,6 +58,8 @@
     <Compile Include="Wrappers\CostAttributesWrapper.cs" />
     <Compile Include="Patch\EntityTypePatch.cs" />
     <Compile Include="Patch\HangarBayPatch.cs" />
+    <Compile Include="Wrappers\ExperienceAttributesWrapper.cs" />
+    <Compile Include="Wrappers\ExperienceLevelAttributesWrapper.cs" />
     <Compile Include="Wrappers\HangarBayWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyAccessor.cs" />

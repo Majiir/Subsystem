@@ -4,6 +4,7 @@ namespace Subsystem.Patch
 {
     public class EntityTypePatch
     {
+        public ExperienceAttributesPatch ExperienceAttributes { get; set; }
         public UnitAttributesPatch UnitAttributes { get; set; }
         public ResearchItemAttributesPatch ResearchItemAttributes { get; set; }
         public UnitHangarAttributesPatch UnitHangarAttributes { get; set; }

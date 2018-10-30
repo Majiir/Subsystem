@@ -5,12 +5,7 @@ namespace Subsystem.Wrappers
 {
     public class AttributeBuffWrapper
     {
-        public AttributeBuffWrapper(string name)
-        {
-            Name = name;
-        }
-
-        public string Name { get; private set; }
+        public string Name { get; set; }
         public ushort AttributeID { get; set; }
         public Buff.Category Category { get; set; }
         public AttributeBuffMode Mode { get; set; }

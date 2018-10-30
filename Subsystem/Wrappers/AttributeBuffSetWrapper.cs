@@ -2,7 +2,6 @@
 using BBI.Core.IO.Streams;
 using BBI.Game.Data;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 
@@ -10,7 +9,12 @@ namespace Subsystem.Wrappers
 {
     public class AttributeBuffSetWrapper : AttributeBuffSet
     {
-        private List<AttributeBuffWrapper> buffs;
+        public List<AttributeBuffWrapper> Buffs { get; } = new List<AttributeBuffWrapper>();
+
+        public AttributeBuffSetWrapper()
+        {
+            UniqueTypeName = nameof(AttributeBuffSetWrapper);
+        }
 
         public AttributeBuffSetWrapper(AttributeBuffSet other)
         {
@@ -30,22 +34,17 @@ namespace Subsystem.Wrappers
 
         public IEnumerable<AttributeBuff> GetBuffs(Buff.Category category, string name)
         {
-            return buffs
+            return Buffs
                 .Where(x => x.Category == category)
                 .Where(x => string.IsNullOrEmpty(name) || string.IsNullOrEmpty(x.Name) || x.Name == name)
                 .Select(x => new AttributeBuff(x.AttributeID, x.Mode, x.Value));
-        }
-
-        public IEnumerable<AttributeBuffWrapper> GetAllBuffs()
-        {
-            return new ReadOnlyCollection<AttributeBuffWrapper>(buffs);
         }
 
         public void Read(BinaryStreamReader reader)
         {
             var count = reader.ReadInt32();
 
-            buffs = new List<AttributeBuffWrapper>();
+            Buffs.Clear();
 
             for (var i = 0; i < count; i++) {
 
@@ -54,8 +53,9 @@ namespace Subsystem.Wrappers
                 var mode = (AttributeBuffMode)reader.ReadInt32();
                 var value = reader.ReadInt32();
 
-                buffs.Add(new AttributeBuffWrapper(name)
+                Buffs.Add(new AttributeBuffWrapper
                 {
+                    Name = name,
                     AttributeID = Buff.AttributeIDFromBuffCategoryAndID(categoryAndId),
                     Category = Buff.CategoryFromBuffCategoryAndID(categoryAndId),
                     Mode = mode,
@@ -66,9 +66,9 @@ namespace Subsystem.Wrappers
 
         public void Write(BinaryStreamWriter writer)
         {
-            writer.WriteInt32(buffs.Count);
+            writer.WriteInt32(Buffs.Count);
 
-            foreach (var buff in buffs)
+            foreach (var buff in Buffs)
             {
                 writer.WriteString(buff.Name);
                 writer.WriteInt32((int)Buff.BuffCategoryAndIDFromCategoryAndAttributeID(buff.Category, buff.AttributeID));

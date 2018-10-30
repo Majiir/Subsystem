@@ -6,6 +6,7 @@ using LitJson;
 using Subsystem.Patch;
 using Subsystem.Wrappers;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -50,6 +51,19 @@ namespace Subsystem
                     {
                         logger.Log($"NOTICE: EntityType not found");
                         continue;
+                    }
+
+                    if (entityTypePatch.ExperienceAttributes != null)
+                    {
+                        using (logger.BeginScope($"ExperienceAttributes:"))
+                        {
+                            var experienceAttributes = entityType.Get<ExperienceAttributes>();
+                            var experienceAttributesWrapper = new ExperienceAttributesWrapper(experienceAttributes);
+
+                            ApplyExperienceAttributesPatch(entityTypePatch.ExperienceAttributes, experienceAttributesWrapper);
+
+                            entityType.Replace(experienceAttributes, experienceAttributesWrapper);
+                        }
                     }
 
                     if (entityTypePatch.UnitAttributes != null)
@@ -246,6 +260,145 @@ namespace Subsystem
                     }
                 }
             }
+        }
+
+        public void ApplyExperienceAttributesPatch(ExperienceAttributesPatch experienceAttributesPatch, ExperienceAttributesWrapper experienceAttributesWrapper)
+        {
+            var wrappers = experienceAttributesWrapper.Levels.Select(x => new ExperienceLevelAttributesWrapper(x)).ToList();
+
+            applyExperienceLevelsPatch(experienceAttributesPatch.Levels, wrappers);
+
+            experienceAttributesWrapper.Levels = wrappers.ToArray();
+        }
+
+        private void applyExperienceLevelsPatch(Dictionary<string, ExperienceLevelAttributesPatch> patch, List<ExperienceLevelAttributesWrapper> wrappers)
+        {
+            foreach (var kvp in patch.OrderBy(x => x.Key))
+            {
+                if (!int.TryParse(kvp.Key, out var index))
+                {
+                    logger.Log($"ERROR: Non-integer key: {kvp.Key}");
+                    break;
+                }
+
+                var elementPatch = kvp.Value;
+
+                using (logger.BeginScope($"ExperienceLevelAttributes: {index}"))
+                {
+                    if (index < wrappers.Count)
+                    {
+                        if (elementPatch.Remove)
+                        {
+                            logger.Log("(removed)");
+                            wrappers[index] = null;
+                            continue;
+                        }
+
+                        var elementWrapper = wrappers[index];
+
+                        ApplyExperienceLevelAttributesPatch(elementPatch, elementWrapper);
+
+                        wrappers[index] = elementWrapper;
+                    }
+                    else if (index == wrappers.Count)
+                    {
+                        if (elementPatch.Remove)
+                        {
+                            logger.Log("WARNING: Remove flag set for non-existent entry");
+                            continue;
+                        }
+
+                        logger.Log("(created)");
+                        var elementWrapper = new ExperienceLevelAttributesWrapper();
+
+                        ApplyExperienceLevelAttributesPatch(elementPatch, elementWrapper);
+
+                        wrappers.Add(elementWrapper);
+                    }
+                    else // if (index > wrappers.Count)
+                    {
+                        logger.Log("ERROR: Non-consecutive index");
+                        continue;
+                    }
+                }
+            }
+
+            wrappers.RemoveAll(x => x == null);
+        }
+
+        public void ApplyExperienceLevelAttributesPatch(ExperienceLevelAttributesPatch experienceLevelAttributesPatch, ExperienceLevelAttributesWrapper experienceLevelAttributesWrapper)
+        {
+            applyPropertyPatch(experienceLevelAttributesPatch.BuffTooltipLocID, () => experienceLevelAttributesWrapper.BuffTooltipLocID);
+            applyPropertyPatch(experienceLevelAttributesPatch.RequiredExperience, () => experienceLevelAttributesWrapper.RequiredExperience);
+
+            var attributeBuffSetWrapper = new AttributeBuffSetWrapper(experienceLevelAttributesWrapper.Buff);
+            experienceLevelAttributesWrapper.Buff = attributeBuffSetWrapper;
+
+            applyAttributeBuffSetPatch(experienceLevelAttributesPatch.Buff, attributeBuffSetWrapper);
+        }
+
+        private void applyAttributeBuffSetPatch(Dictionary<string, AttributeBuffPatch> patch, AttributeBuffSetWrapper wrapper)
+        {
+            foreach (var kvp in patch.OrderBy(x => x.Key))
+            {
+                if (!int.TryParse(kvp.Key, out var index))
+                {
+                    logger.Log($"ERROR: Non-integer buff key: {kvp.Key}");
+                    break;
+                }
+
+                var buffPatch = kvp.Value;
+
+                using (logger.BeginScope($"AttributeBuff: {index}"))
+                {
+                    if (index < wrapper.Buffs.Count)
+                    {
+                        if (buffPatch.Remove)
+                        {
+                            logger.Log("(removed)");
+                            wrapper.Buffs[index] = null;
+                            continue;
+                        }
+
+                        var buffWrapper = wrapper.Buffs[index];
+
+                        applyAttributeBuffPatch(buffPatch, buffWrapper);
+
+                        wrapper.Buffs[index] = buffWrapper;
+                    }
+                    else if (index == wrapper.Buffs.Count)
+                    {
+                        if (buffPatch.Remove)
+                        {
+                            logger.Log("WARNING: Remove flag set for non-existant entry");
+                            continue;
+                        }
+
+                        logger.Log("(created)");
+                        var buffWrapper = new AttributeBuffWrapper();
+
+                        applyAttributeBuffPatch(buffPatch, buffWrapper);
+
+                        wrapper.Buffs.Add(buffWrapper);
+                    }
+                    else // if (index > wrapper.Buffs.Count)
+                    {
+                        logger.Log("ERROR: Non-consecutive index");
+                        continue;
+                    }
+                }
+            }
+
+            wrapper.Buffs.RemoveAll(x => x == null);
+        }
+
+        private void applyAttributeBuffPatch(AttributeBuffPatch patch, AttributeBuffWrapper wrapper)
+        {
+            applyPropertyPatch(patch.Name, () => wrapper.Name);
+            applyPropertyPatch(patch.Attribute, () => wrapper.AttributeID, Buff.AttributeIDFromBuffCategoryAndID);
+            applyPropertyPatch(patch.Attribute, () => wrapper.Category, Buff.CategoryFromBuffCategoryAndID);
+            applyPropertyPatch(patch.Mode, () => wrapper.Mode);
+            applyPropertyPatch(patch.Value, () => wrapper.Value);
         }
 
         public void ApplyUnitAttributesPatch(UnitAttributesPatch unitAttributesPatch, UnitAttributesWrapper unitAttributesWrapper)
