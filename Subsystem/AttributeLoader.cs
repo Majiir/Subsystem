@@ -16,7 +16,14 @@ namespace Subsystem
 {
     public class AttributeLoader
     {
-        private readonly StringLogger logger = new StringLogger();
+        private readonly StringWriter writer;
+        private readonly StringLogger logger;
+
+        public AttributeLoader()
+        {
+            writer = new StringWriter();
+            logger = new StringLogger(writer);
+        }
 
         public static void LoadAttributes(EntityTypeCollection entityTypeCollection)
         {
@@ -188,7 +195,7 @@ namespace Subsystem
                 }
             }
 
-            File.WriteAllText(Path.Combine(Application.dataPath, "Subsystem.log"), logger.GetLog());
+            File.WriteAllText(Path.Combine(Application.dataPath, "Subsystem.log"), writer.ToString());
             Debug.Log($"[SUBSYSTEM] Applied attributes patch. See Subsystem.log for details.");
         }
 
