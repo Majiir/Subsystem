@@ -42,6 +42,7 @@
     <Reference Include="UnityEngine" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IRemovable.cs" />
     <Compile Include="Patch\AbilityAttributesPatch.cs" />
     <Compile Include="Patch\AttributeBuffPatch.cs" />
     <Compile Include="Patch\ExperienceAttributesPatch.cs" />
