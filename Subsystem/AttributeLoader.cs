@@ -278,7 +278,8 @@ namespace Subsystem
             experienceAttributesWrapper.Levels = wrappers.ToArray();
         }
 
-        private void applyExperienceLevelsPatch(Dictionary<string, ExperienceLevelAttributesPatch> patch, List<ExperienceLevelAttributesWrapper> wrappers)
+        private void applyListPatch<TPatch, TWrapper>(Dictionary<string, TPatch> patch, List<TWrapper> wrappers, Func<TWrapper> createWrapper, Action<TPatch, TWrapper> applyPatch, string elementName)
+            where TWrapper : class
         {
             foreach (var kvp in patch.OrderBy(x => x.Key))
             {
@@ -290,11 +291,13 @@ namespace Subsystem
 
                 var elementPatch = kvp.Value;
 
-                using (logger.BeginScope($"ExperienceLevelAttributes: {index}"))
+                using (logger.BeginScope($"{elementName}: {index}"))
                 {
+                    var remove = elementPatch is IRemovable removable && removable.Remove;
+
                     if (index < wrappers.Count)
                     {
-                        if (elementPatch.Remove)
+                        if (remove)
                         {
                             logger.Log("(removed)");
                             wrappers[index] = null;
@@ -303,22 +306,22 @@ namespace Subsystem
 
                         var elementWrapper = wrappers[index];
 
-                        ApplyExperienceLevelAttributesPatch(elementPatch, elementWrapper);
+                        applyPatch(elementPatch, elementWrapper);
 
                         wrappers[index] = elementWrapper;
                     }
                     else if (index == wrappers.Count)
                     {
-                        if (elementPatch.Remove)
+                        if (remove)
                         {
                             logger.Log("WARNING: Remove flag set for non-existent entry");
                             continue;
                         }
 
                         logger.Log("(created)");
-                        var elementWrapper = new ExperienceLevelAttributesWrapper();
+                        var elementWrapper = createWrapper(); // Deal with INamed?
 
-                        ApplyExperienceLevelAttributesPatch(elementPatch, elementWrapper);
+                        applyPatch(elementPatch, elementWrapper);
 
                         wrappers.Add(elementWrapper);
                     }
@@ -331,6 +334,11 @@ namespace Subsystem
             }
 
             wrappers.RemoveAll(x => x == null);
+        }
+
+        private void applyExperienceLevelsPatch(Dictionary<string, ExperienceLevelAttributesPatch> patch, List<ExperienceLevelAttributesWrapper> wrappers)
+        {
+            applyListPatch(patch, wrappers, () => new ExperienceLevelAttributesWrapper(), ApplyExperienceLevelAttributesPatch, nameof(ExperienceLevelAttributes));
         }
 
         public void ApplyExperienceLevelAttributesPatch(ExperienceLevelAttributesPatch experienceLevelAttributesPatch, ExperienceLevelAttributesWrapper experienceLevelAttributesWrapper)
@@ -346,57 +354,7 @@ namespace Subsystem
 
         private void applyAttributeBuffSetPatch(Dictionary<string, AttributeBuffPatch> patch, AttributeBuffSetWrapper wrapper)
         {
-            foreach (var kvp in patch.OrderBy(x => x.Key))
-            {
-                if (!int.TryParse(kvp.Key, out var index))
-                {
-                    logger.Log($"ERROR: Non-integer buff key: {kvp.Key}");
-                    break;
-                }
-
-                var buffPatch = kvp.Value;
-
-                using (logger.BeginScope($"AttributeBuff: {index}"))
-                {
-                    if (index < wrapper.Buffs.Count)
-                    {
-                        if (buffPatch.Remove)
-                        {
-                            logger.Log("(removed)");
-                            wrapper.Buffs[index] = null;
-                            continue;
-                        }
-
-                        var buffWrapper = wrapper.Buffs[index];
-
-                        applyAttributeBuffPatch(buffPatch, buffWrapper);
-
-                        wrapper.Buffs[index] = buffWrapper;
-                    }
-                    else if (index == wrapper.Buffs.Count)
-                    {
-                        if (buffPatch.Remove)
-                        {
-                            logger.Log("WARNING: Remove flag set for non-existant entry");
-                            continue;
-                        }
-
-                        logger.Log("(created)");
-                        var buffWrapper = new AttributeBuffWrapper();
-
-                        applyAttributeBuffPatch(buffPatch, buffWrapper);
-
-                        wrapper.Buffs.Add(buffWrapper);
-                    }
-                    else // if (index > wrapper.Buffs.Count)
-                    {
-                        logger.Log("ERROR: Non-consecutive index");
-                        continue;
-                    }
-                }
-            }
-
-            wrapper.Buffs.RemoveAll(x => x == null);
+            applyListPatch(patch, wrapper.Buffs, () => new AttributeBuffWrapper(), applyAttributeBuffPatch, nameof(AttributeBuff));
         }
 
         private void applyAttributeBuffPatch(AttributeBuffPatch patch, AttributeBuffWrapper wrapper)
@@ -624,59 +582,11 @@ namespace Subsystem
 
         private void applyWeaponModifiers(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
         {
-            var modifiers = weaponAttributesWrapper.Modifiers.ToList();
+            var modifiers = weaponAttributesWrapper.Modifiers.Select(x => new WeaponModifierInfoWrapper(x)).ToList();
 
-            foreach (var kvp in weaponAttributesPatch.Modifiers.OrderBy(x => x.Key))
-            {
-                if (!int.TryParse(kvp.Key, out var index))
-                {
-                    logger.Log($"ERROR: Non-integer modifier key: {kvp.Key}");
-                    break;
-                }
+            applyListPatch(weaponAttributesPatch.Modifiers, modifiers, () => new WeaponModifierInfoWrapper(), ApplyWeaponModifierInfoPatch, nameof(WeaponModifierInfo));
 
-                var modifierPatch = kvp.Value;
-
-                using (logger.BeginScope($"WeaponModifierInfo: {index}"))
-                {
-                    if (index < modifiers.Count)
-                    {
-                        if (modifierPatch.Remove)
-                        {
-                            logger.Log("(removed)");
-                            modifiers[index] = null;
-                            continue;
-                        }
-
-                        var modifierWrapper = new WeaponModifierInfoWrapper(modifiers[index]);
-
-                        ApplyWeaponModifierInfoPatch(modifierPatch, modifierWrapper);
-
-                        modifiers[index] = modifierWrapper;
-                    }
-                    else if (index == modifiers.Count)
-                    {
-                        if (modifierPatch.Remove)
-                        {
-                            logger.Log("WARNING: Remove flag set for non-existant entry");
-                            continue;
-                        }
-
-                        logger.Log("(created)");
-                        var modifierWrapper = new WeaponModifierInfoWrapper();
-
-                        ApplyWeaponModifierInfoPatch(modifierPatch, modifierWrapper);
-
-                        modifiers.Add(modifierWrapper);
-                    }
-                    else // if (index > modifiers.Count)
-                    {
-                        logger.Log("ERROR: Non-consecutive index");
-                        continue;
-                    }
-                }
-            }
-
-            weaponAttributesWrapper.Modifiers = modifiers.Where(x => x != null).ToArray();
+            weaponAttributesWrapper.Modifiers = modifiers.ToArray();
         }
 
         public void ApplyWeaponModifierInfoPatch(WeaponModifierInfoPatch weaponModifierInfoPatch, WeaponModifierInfoWrapper weaponModifierInfoWrapper)
