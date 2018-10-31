@@ -25,7 +25,7 @@ namespace Subsystem
             logger = new StringLogger(writer);
         }
 
-        public static void LoadAttributes(EntityTypeCollection entityTypeCollection)
+        public void LoadAttributes(EntityTypeCollection entityTypeCollection)
         {
             try
             {
@@ -34,8 +34,7 @@ namespace Subsystem
 
                 var attributesPatch = JsonMapper.ToObject<AttributesPatch>(json);
 
-                var loader = new AttributeLoader();
-                loader.ApplyAttributesPatch(entityTypeCollection, attributesPatch);
+                ApplyAttributesPatch(entityTypeCollection, attributesPatch);
             }
             catch (Exception e)
             {
