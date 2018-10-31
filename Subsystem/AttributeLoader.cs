@@ -505,6 +505,8 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsTargetAlignment, () => weaponAttributesWrapper.StatusEffectsTargetAlignment);
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsExcludeTargetType, () => weaponAttributesWrapper.StatusEffectsExcludeTargetType);
             applyPropertyPatch(weaponAttributesPatch.ActiveStatusEffectsIndex, () => weaponAttributesWrapper.ActiveStatusEffectsIndex);
+
+            applyEntityTypesToSpawnOnImpact(weaponAttributesPatch, weaponAttributesWrapper);
         }
 
         private void applyWeaponModifiers(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
@@ -522,6 +524,21 @@ namespace Subsystem
             applyPropertyPatch(weaponModifierInfoPatch.ClassOperator, () => weaponModifierInfoWrapper.ClassOperator);
             applyPropertyPatch(weaponModifierInfoPatch.Modifier, () => weaponModifierInfoWrapper.Modifier);
             applyPropertyPatch(weaponModifierInfoPatch.Amount, () => weaponModifierInfoWrapper.Amount);
+        }
+
+        private void applyEntityTypesToSpawnOnImpact(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
+        {
+            var wrappers = weaponAttributesWrapper.EntityTypesToSpawnOnImpact.Select(x => new EntityTypeToSpawnAttributesWrapper(x)).ToList();
+
+            applyListPatch(weaponAttributesPatch.EntityTypesToSpawnOnImpact, wrappers, () => new EntityTypeToSpawnAttributesWrapper(), ApplyEntityTypeToSpawnAttributesPatch, nameof(EntityTypeToSpawnAttributes));
+
+            weaponAttributesWrapper.EntityTypesToSpawnOnImpact = wrappers.Where(x => x != null).ToArray();
+        }
+
+        public void ApplyEntityTypeToSpawnAttributesPatch(EntityTypeToSpawnAttributesPatch patch, EntityTypeToSpawnAttributesWrapper wrapper)
+        {
+            applyPropertyPatch(patch.EntityTypeToSpawn, () => wrapper.EntityTypeToSpawn);
+            applyPropertyPatch(patch.SpawnRotationOffsetDegrees, () => wrapper.SpawnRotationOffsetDegrees, Fixed64.UnsafeFromDouble);
         }
 
         private void applyRangeAttributes(WeaponRange weaponRange, RangeBasedWeaponAttributesPatch rangePatch, WeaponAttributesWrapper weaponWrapper)
