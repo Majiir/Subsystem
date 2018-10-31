@@ -527,9 +527,7 @@ namespace Subsystem
                         inventoryAttributesWrapper = new InventoryAttributesWrapper(inventoryBinding.InventoryAttributes);
                     }
 
-                    applyPropertyPatch(inventoryPatch.Capacity, () => inventoryAttributesWrapper.Capacity);
-                    applyPropertyPatch(inventoryPatch.HasUnlimitedCapacity, () => inventoryAttributesWrapper.HasUnlimitedCapacity);
-                    applyPropertyPatch(inventoryPatch.StartingAmount, () => inventoryAttributesWrapper.StartingAmount);
+                    ApplyInventoryAttributesPatch(inventoryPatch, inventoryAttributesWrapper);
 
                     var newBinding = new InventoryBinding(
                         inventoryID: inventoryId,
@@ -549,6 +547,13 @@ namespace Subsystem
             }
 
             storageAttributesWrapper.InventoryLoadout = loadout.ToArray();
+        }
+
+        private void ApplyInventoryAttributesPatch(InventoryAttributesPatch inventoryPatch, InventoryAttributesWrapper inventoryAttributesWrapper)
+        {
+            applyPropertyPatch(inventoryPatch.Capacity, () => inventoryAttributesWrapper.Capacity);
+            applyPropertyPatch(inventoryPatch.HasUnlimitedCapacity, () => inventoryAttributesWrapper.HasUnlimitedCapacity);
+            applyPropertyPatch(inventoryPatch.StartingAmount, () => inventoryAttributesWrapper.StartingAmount);
         }
 
         public void ApplyWeaponAttributesPatch(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
