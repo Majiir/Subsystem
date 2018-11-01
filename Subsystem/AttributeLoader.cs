@@ -611,20 +611,22 @@ namespace Subsystem
 
             if (weaponAttributesPatch.OutputDPS == true)
             {
-                using (logger.BeginScope($"Damage output:"))
+                using (logger.BeginScope($"DPS info:"))
                 {
-                    logger.Log($"BaseDamagePerRound {weaponAttributesWrapper.BaseDamagePerRound}");
-                    logger.Log($"RateOfFire {weaponAttributesWrapper.RateOfFire}");
-                    logger.Log($"Burst: {weaponAttributesWrapper.BurstPeriodMinTimeMS} - {weaponAttributesWrapper.BurstPeriodMaxTimeMS}");
-                    logger.Log($"NumberOfBursts {weaponAttributesWrapper.NumberOfBursts}");
-                    logger.Log($"CooldownTimeMS: {weaponAttributesWrapper.CooldownTimeMS}");
-                    logger.Log($"WindUpTimeMS: {weaponAttributesWrapper.WindUpTimeMS}");
-                    logger.Log($"WindDownTimeMS: {weaponAttributesWrapper.WindDownTimeMS}");
-                    logger.Log($"ReloadTimeMS {weaponAttributesWrapper.ReloadTimeMS}");
-                    logger.Log($"DamagePacketsPerShot {weaponAttributesWrapper.DamagePacketsPerShot}");
-                    logger.Log($"AreaOfEffectFalloffType {weaponAttributesWrapper.AreaOfEffectFalloffType}");
-                    logger.Log($"AreaOfEffectRadius {weaponAttributesWrapper.AreaOfEffectRadius}");
-                    logger.Log($"");
+                    using (logger.BeginScope($"Weapon stats:"))
+                    {
+                        logger.Log($"BaseDamagePerRound {weaponAttributesWrapper.BaseDamagePerRound}");
+                        logger.Log($"RateOfFire {weaponAttributesWrapper.RateOfFire}");
+                        logger.Log($"Burst: {weaponAttributesWrapper.BurstPeriodMinTimeMS} - {weaponAttributesWrapper.BurstPeriodMaxTimeMS}");
+                        logger.Log($"NumberOfBursts {weaponAttributesWrapper.NumberOfBursts}");
+                        logger.Log($"CooldownTimeMS: {weaponAttributesWrapper.CooldownTimeMS}");
+                        logger.Log($"WindUpTimeMS: {weaponAttributesWrapper.WindUpTimeMS}");
+                        logger.Log($"WindDownTimeMS: {weaponAttributesWrapper.WindDownTimeMS}");
+                        logger.Log($"ReloadTimeMS {weaponAttributesWrapper.ReloadTimeMS}");
+                        logger.Log($"DamagePacketsPerShot {weaponAttributesWrapper.DamagePacketsPerShot}");
+                        logger.Log($"AreaOfEffectFalloffType {weaponAttributesWrapper.AreaOfEffectFalloffType}");
+                        logger.Log($"AreaOfEffectRadius {weaponAttributesWrapper.AreaOfEffectRadius}");
+                    }
 
                     int burstVariance = weaponAttributesWrapper.BurstPeriodMaxTimeMS - weaponAttributesWrapper.BurstPeriodMinTimeMS;
 
@@ -648,13 +650,15 @@ namespace Subsystem
                     logger.Log($"trueROF: {trueROF}");
                     logger.Log($"sequenceDuration: {sequenceDuration}");
 
-                    for (double armor = 0; armor <= 12; armor += 6)
+                    for (double armor = 0; armor <= 18; armor += 6)
                     {
                         using (logger.BeginScope($"Armor {armor} DPS:"))
                         {
-                            double dps = (Fixed64.UnsafeDoubleValue(weaponAttributesWrapper.BaseDamagePerRound) - armor * weaponAttributesWrapper.DamagePacketsPerShot) * averageShotsPerBurst * weaponAttributesWrapper.NumberOfBursts / sequenceDuration;
+                            double dps = Math.Max(1, Fixed64.UnsafeDoubleValue(weaponAttributesWrapper.BaseDamagePerRound) - armor * weaponAttributesWrapper.DamagePacketsPerShot) * averageShotsPerBurst * weaponAttributesWrapper.NumberOfBursts / sequenceDuration;
                             foreach (var range in weaponAttributesWrapper.Ranges)
-                                logger.Log($"{range.Range} ({range.Distance} / {range.Accuracy}%): {dps * Fixed64.UnsafeDoubleValue(range.Accuracy) / 100}");
+                            {
+                                logger.Log($"{range.Range,6} ({range.Distance,5:D} /{(int)Fixed64.UnsafeDoubleValue(range.Accuracy),3:D}%): {dps * Fixed64.UnsafeDoubleValue(range.Accuracy) / 100:F4}");
+                            }
                         }
                     }
                 }
