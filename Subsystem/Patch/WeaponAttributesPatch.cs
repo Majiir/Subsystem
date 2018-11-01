@@ -44,5 +44,7 @@ namespace Subsystem.Patch
         public AbilityTargetAlignment? StatusEffectsTargetAlignment { get; set; }
         public UnitClass? StatusEffectsExcludeTargetType { get; set; }
         public int? ActiveStatusEffectsIndex { get; set; }
+
+        public bool? OutputDPS { get; set; }
     }
 }
