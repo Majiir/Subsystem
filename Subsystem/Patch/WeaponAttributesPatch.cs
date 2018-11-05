@@ -44,6 +44,7 @@ namespace Subsystem.Patch
         public AbilityTargetAlignment? StatusEffectsTargetAlignment { get; set; }
         public UnitClass? StatusEffectsExcludeTargetType { get; set; }
         public int? ActiveStatusEffectsIndex { get; set; }
+        public Dictionary<string, EntityTypeToSpawnAttributesPatch> EntityTypesToSpawnOnImpact { get; set; } = new Dictionary<string, EntityTypeToSpawnAttributesPatch>();
         public TargetPrioritizationAttributesPatch TargetPrioritizationAttributes { get; set; }
 
         public bool? OutputDPS { get; set; }

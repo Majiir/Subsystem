@@ -3,7 +3,7 @@ using BBI.Game.Data;
 
 namespace Subsystem.Patch
 {
-    public class AttributeBuffPatch
+    public class AttributeBuffPatch : IRemovable
     {
         public string Name { get; set; }
         public Buff.CategoryAndID? Attribute { get; set; }

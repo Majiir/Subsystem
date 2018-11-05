@@ -2,7 +2,7 @@
 
 namespace Subsystem.Patch
 {
-    public class ExperienceLevelAttributesPatch
+    public class ExperienceLevelAttributesPatch : IRemovable
     {
         public string BuffTooltipLocID { get; set; }
         public int? RequiredExperience { get; set; }

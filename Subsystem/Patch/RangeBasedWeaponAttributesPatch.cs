@@ -1,6 +1,6 @@
 ﻿namespace Subsystem.Patch
 {
-    public class RangeBasedWeaponAttributesPatch
+    public class RangeBasedWeaponAttributesPatch : IRemovable
     {
         public double? Accuracy { get; set; }
         public double? Distance { get; set; }

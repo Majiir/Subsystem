@@ -2,7 +2,7 @@
 
 namespace Subsystem.Patch
 {
-    public class WeaponModifierInfoPatch
+    public class WeaponModifierInfoPatch : IRemovable
     {
         public UnitClass? TargetClass { get; set; }
         public FlagOperator? ClassOperator { get; set; }
