@@ -650,6 +650,61 @@ namespace Subsystem
             applyPropertyPatch(turretPatch.FieldOfView, () => turretWrapper.FieldOfView, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(turretPatch.RotationSpeed, () => turretWrapper.RotationSpeed, x => Fixed64.UnsafeFromDouble(x));
         }
+        
+        public void outputWeaponDPS(WeaponAttributesWrapper weaponAttributesWrapper)
+        {
+            using (logger.BeginScope($"DPS info:"))
+            {
+                using (logger.BeginScope($"Weapon stats:"))
+                {
+                    logger.Log($"BaseDamagePerRound {weaponAttributesWrapper.BaseDamagePerRound}");
+                    logger.Log($"RateOfFire {weaponAttributesWrapper.RateOfFire}");
+                    logger.Log($"Burst: {weaponAttributesWrapper.BurstPeriodMinTimeMS} - {weaponAttributesWrapper.BurstPeriodMaxTimeMS}");
+                    logger.Log($"NumberOfBursts {weaponAttributesWrapper.NumberOfBursts}");
+                    logger.Log($"CooldownTimeMS: {weaponAttributesWrapper.CooldownTimeMS}");
+                    logger.Log($"WindUpTimeMS: {weaponAttributesWrapper.WindUpTimeMS}");
+                    logger.Log($"WindDownTimeMS: {weaponAttributesWrapper.WindDownTimeMS}");
+                    logger.Log($"ReloadTimeMS: {weaponAttributesWrapper.ReloadTimeMS}");
+                    logger.Log($"DamagePacketsPerShot: {weaponAttributesWrapper.DamagePacketsPerShot}");
+                    logger.Log($"AreaOfEffectFalloffType: {weaponAttributesWrapper.AreaOfEffectFalloffType}");
+                    logger.Log($"AreaOfEffectRadius: {weaponAttributesWrapper.AreaOfEffectRadius}");
+                }
+
+                int burstVariance = weaponAttributesWrapper.BurstPeriodMaxTimeMS - weaponAttributesWrapper.BurstPeriodMinTimeMS;
+
+                int shotDuration = Math.Max(1, 1000 / weaponAttributesWrapper.RateOfFire);
+
+                int shotsMin = Math.Max(1, weaponAttributesWrapper.BurstPeriodMinTimeMS / shotDuration);
+                int shotsMax = Math.Max(1, weaponAttributesWrapper.BurstPeriodMaxTimeMS / shotDuration);
+
+                int lowBracket = Math.Min(weaponAttributesWrapper.BurstPeriodMinTimeMS, shotDuration - 1 - (weaponAttributesWrapper.BurstPeriodMinTimeMS - shotsMin * shotDuration));
+                int midBracket = Math.Max(0, shotsMax - shotsMin - 1) * shotDuration;
+                int highBracket = shotsMin < shotsMax ? weaponAttributesWrapper.BurstPeriodMaxTimeMS - shotsMax * shotDuration + 1 : 0;
+
+                double avgBurst = (weaponAttributesWrapper.BurstPeriodMaxTimeMS + weaponAttributesWrapper.BurstPeriodMinTimeMS) * 0.5;
+
+                double averageShotsPerBurst = burstVariance == 0 ? shotsMin : (double)(shotsMin * lowBracket + (shotsMax + shotsMin) / 2 * midBracket + shotsMax * highBracket) / burstVariance;
+                double trueROF = averageShotsPerBurst / avgBurst * 1000;
+
+                double sequenceDuration = (weaponAttributesWrapper.WindUpTimeMS + (avgBurst + weaponAttributesWrapper.CooldownTimeMS) * (weaponAttributesWrapper.NumberOfBursts - 1) + avgBurst + weaponAttributesWrapper.ReloadTimeMS) / 1000;
+
+                logger.Log($"averageShotsPerBurst: {averageShotsPerBurst:F4}");
+                logger.Log($"trueROF: {trueROF:F4}");
+                logger.Log($"sequenceDuration: {sequenceDuration:F4}");
+
+                for (double armor = 0; armor <= 18; armor += 6)
+                {
+                    using (logger.BeginScope($"Armor {armor} DPS:"))
+                    {
+                        double dps = Math.Max(1, Fixed64.UnsafeDoubleValue(weaponAttributesWrapper.BaseDamagePerRound) - armor * weaponAttributesWrapper.DamagePacketsPerShot) * averageShotsPerBurst * weaponAttributesWrapper.NumberOfBursts / sequenceDuration;
+                        foreach (var range in weaponAttributesWrapper.Ranges)
+                        {
+                            logger.Log($"{range.Range,6} ({range.Distance,5:D} /{(int)Fixed64.UnsafeDoubleValue(range.Accuracy),3:D}%): {dps * Fixed64.UnsafeDoubleValue(range.Accuracy) / 100:F4}");
+                        }
+                    }
+                }
+            }
+        }
 
         public void ApplyUnitHangarAttributesPatch(UnitHangarAttributesPatch unitHangarPatch, UnitHangarAttributesWrapper unitHangarWrapper)
         {
