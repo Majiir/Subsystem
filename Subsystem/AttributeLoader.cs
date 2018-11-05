@@ -655,20 +655,18 @@ namespace Subsystem
         {
             using (logger.BeginScope($"DPS info:"))
             {
-                using (logger.BeginScope($"Weapon stats:"))
-                {
-                    logger.Log($"BaseDamagePerRound {weaponAttributesWrapper.BaseDamagePerRound}");
-                    logger.Log($"RateOfFire {weaponAttributesWrapper.RateOfFire}");
-                    logger.Log($"Burst: {weaponAttributesWrapper.BurstPeriodMinTimeMS} - {weaponAttributesWrapper.BurstPeriodMaxTimeMS}");
-                    logger.Log($"NumberOfBursts {weaponAttributesWrapper.NumberOfBursts}");
-                    logger.Log($"CooldownTimeMS: {weaponAttributesWrapper.CooldownTimeMS}");
-                    logger.Log($"WindUpTimeMS: {weaponAttributesWrapper.WindUpTimeMS}");
-                    logger.Log($"WindDownTimeMS: {weaponAttributesWrapper.WindDownTimeMS}");
-                    logger.Log($"ReloadTimeMS: {weaponAttributesWrapper.ReloadTimeMS}");
-                    logger.Log($"DamagePacketsPerShot: {weaponAttributesWrapper.DamagePacketsPerShot}");
-                    logger.Log($"AreaOfEffectFalloffType: {weaponAttributesWrapper.AreaOfEffectFalloffType}");
-                    logger.Log($"AreaOfEffectRadius: {weaponAttributesWrapper.AreaOfEffectRadius}");
-                }
+                logger.Log($"BaseDamagePerRound {weaponAttributesWrapper.BaseDamagePerRound}");
+                logger.Log($"RateOfFire {weaponAttributesWrapper.RateOfFire}");
+                logger.Log($"Burst: {weaponAttributesWrapper.BurstPeriodMinTimeMS} - {weaponAttributesWrapper.BurstPeriodMaxTimeMS}");
+                logger.Log($"NumberOfBursts {weaponAttributesWrapper.NumberOfBursts}");
+                logger.Log($"CooldownTimeMS: {weaponAttributesWrapper.CooldownTimeMS}");
+                logger.Log($"WindUpTimeMS: {weaponAttributesWrapper.WindUpTimeMS}");
+                logger.Log($"WindDownTimeMS: {weaponAttributesWrapper.WindDownTimeMS}");
+                logger.Log($"ReloadTimeMS: {weaponAttributesWrapper.ReloadTimeMS}");
+                logger.Log($"DamagePacketsPerShot: {weaponAttributesWrapper.DamagePacketsPerShot}");
+                logger.Log($"AreaOfEffectFalloffType: {weaponAttributesWrapper.AreaOfEffectFalloffType}");
+                logger.Log($"AreaOfEffectRadius: {weaponAttributesWrapper.AreaOfEffectRadius}");
+                logger.Log("");
 
                 int burstVariance = weaponAttributesWrapper.BurstPeriodMaxTimeMS - weaponAttributesWrapper.BurstPeriodMinTimeMS;
 
