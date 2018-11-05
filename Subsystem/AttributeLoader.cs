@@ -105,6 +105,20 @@ namespace Subsystem
                         }
                     }
 
+                    if (entityTypePatch.DetectableAttributes != null)
+                    {
+                        using (logger.BeginScope($"DetectableAttributes:"))
+                        {
+                            var detectableAttributes = entityType.Get<DetectableAttributes>();
+                            var detectableAttributesWrapper = new DetectableAttributesWrapper(detectableAttributes);
+
+                            ApplyDetectableAttributesPatch(entityTypePatch.DetectableAttributes, detectableAttributesWrapper);
+
+                            entityType.Replace(detectableAttributes, detectableAttributesWrapper);
+                        }
+                    }
+
+
                     if (entityTypePatch.UnitMovementAttributes != null)
                     {
                         using (logger.BeginScope($"UnitMovementAttributes:"))
@@ -591,8 +605,7 @@ namespace Subsystem
             {
                 using (logger.BeginScope($"Turret:"))
                 {
-                    var turret = weaponAttributesWrapper.Turret;
-                    var turretWrapper = new TurretAttributesWrapper(turret);
+                    var turretWrapper = new TurretAttributesWrapper(weaponAttributesWrapper.Turret);
 
                     ApplyTurretAttributesPatch(weaponAttributesPatch.Turret, turretWrapper);
 
@@ -609,62 +622,23 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsExcludeTargetType, () => weaponAttributesWrapper.StatusEffectsExcludeTargetType);
             applyPropertyPatch(weaponAttributesPatch.ActiveStatusEffectsIndex, () => weaponAttributesWrapper.ActiveStatusEffectsIndex);
 
-            if (weaponAttributesPatch.OutputDPS == true)
+            if (weaponAttributesPatch.TargetPrioritizationAttributes != null)
             {
-                using (logger.BeginScope($"DPS info:"))
+                using (logger.BeginScope($"TargetPrioritizationAttributes:"))
                 {
-                    using (logger.BeginScope($"Weapon stats:"))
-                    {
-                        logger.Log($"BaseDamagePerRound {weaponAttributesWrapper.BaseDamagePerRound}");
-                        logger.Log($"RateOfFire {weaponAttributesWrapper.RateOfFire}");
-                        logger.Log($"Burst: {weaponAttributesWrapper.BurstPeriodMinTimeMS} - {weaponAttributesWrapper.BurstPeriodMaxTimeMS}");
-                        logger.Log($"NumberOfBursts {weaponAttributesWrapper.NumberOfBursts}");
-                        logger.Log($"CooldownTimeMS: {weaponAttributesWrapper.CooldownTimeMS}");
-                        logger.Log($"WindUpTimeMS: {weaponAttributesWrapper.WindUpTimeMS}");
-                        logger.Log($"WindDownTimeMS: {weaponAttributesWrapper.WindDownTimeMS}");
-                        logger.Log($"ReloadTimeMS {weaponAttributesWrapper.ReloadTimeMS}");
-                        logger.Log($"DamagePacketsPerShot {weaponAttributesWrapper.DamagePacketsPerShot}");
-                        logger.Log($"AreaOfEffectFalloffType {weaponAttributesWrapper.AreaOfEffectFalloffType}");
-                        logger.Log($"AreaOfEffectRadius {weaponAttributesWrapper.AreaOfEffectRadius}");
-                    }
+                    var targetPrioritizationWrapper = new TargetPriorizationAttributesWrapper(weaponAttributesWrapper.TargetPriorizationAttributes);
 
-                    int burstVariance = weaponAttributesWrapper.BurstPeriodMaxTimeMS - weaponAttributesWrapper.BurstPeriodMinTimeMS;
+                    ApplyTargetPrioritizationAttributesPatch(weaponAttributesPatch.TargetPrioritizationAttributes, targetPrioritizationWrapper);
 
-                    int shotDuration = Math.Max(1, 1000 / weaponAttributesWrapper.RateOfFire);
-
-                    int shotsMin = Math.Max(1, weaponAttributesWrapper.BurstPeriodMinTimeMS / shotDuration);
-                    int shotsMax = Math.Max(1, weaponAttributesWrapper.BurstPeriodMaxTimeMS / shotDuration);
-
-                    int lowBracket = Math.Min(weaponAttributesWrapper.BurstPeriodMinTimeMS, shotDuration - 1 - (weaponAttributesWrapper.BurstPeriodMinTimeMS - shotsMin * shotDuration));
-                    int midBracket = Math.Max(0, shotsMax - shotsMin - 1) * shotDuration;
-                    int highBracket = shotsMin < shotsMax ? weaponAttributesWrapper.BurstPeriodMaxTimeMS - shotsMax * shotDuration + 1 : 0;
-
-                    double avgBurst = (weaponAttributesWrapper.BurstPeriodMaxTimeMS + weaponAttributesWrapper.BurstPeriodMinTimeMS) * 0.5;
-
-                    double averageShotsPerBurst = burstVariance == 0 ? shotsMin : (double)(shotsMin * lowBracket + (shotsMax + shotsMin) / 2 * midBracket + shotsMax * highBracket) / burstVariance;
-                    double trueROF = averageShotsPerBurst / avgBurst * 1000;
-
-                    double sequenceDuration = (weaponAttributesWrapper.WindUpTimeMS + (avgBurst + weaponAttributesWrapper.CooldownTimeMS) * (weaponAttributesWrapper.NumberOfBursts - 1) + avgBurst + weaponAttributesWrapper.ReloadTimeMS) / 1000;
-
-                    logger.Log($"averageShotsPerBurst: {averageShotsPerBurst}");
-                    logger.Log($"trueROF: {trueROF}");
-                    logger.Log($"sequenceDuration: {sequenceDuration}");
-
-                    for (double armor = 0; armor <= 18; armor += 6)
-                    {
-                        using (logger.BeginScope($"Armor {armor} DPS:"))
-                        {
-                            double dps = Math.Max(1, Fixed64.UnsafeDoubleValue(weaponAttributesWrapper.BaseDamagePerRound) - armor * weaponAttributesWrapper.DamagePacketsPerShot) * averageShotsPerBurst * weaponAttributesWrapper.NumberOfBursts / sequenceDuration;
-                            foreach (var range in weaponAttributesWrapper.Ranges)
-                            {
-                                logger.Log($"{range.Range,6} ({range.Distance,5:D} /{(int)Fixed64.UnsafeDoubleValue(range.Accuracy),3:D}%): {dps * Fixed64.UnsafeDoubleValue(range.Accuracy) / 100:F4}");
-                            }
-                        }
-                    }
+                    weaponAttributesWrapper.TargetPriorizationAttributes = targetPrioritizationWrapper;
                 }
             }
-        }
 
+            if (weaponAttributesPatch.OutputDPS == true)
+            {
+                outputWeaponDPS(weaponAttributesWrapper);
+            }
+        }
         private void applyWeaponModifiers(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
         {
             var modifiers = weaponAttributesWrapper.Modifiers.ToList();
@@ -785,6 +759,74 @@ namespace Subsystem
             applyPropertyPatch(turretPatch.RotationSpeed, () => turretWrapper.RotationSpeed, x => Fixed64.UnsafeFromDouble(x));
         }
 
+        public void ApplyTargetPrioritizationAttributesPatch(TargetPrioritizationAttributesPatch targetPrioritizationPatch, TargetPriorizationAttributesWrapper targetPrioritizationWrapper)
+        {
+            applyPropertyPatch(targetPrioritizationPatch.WeaponEffectivenessWeight, () => targetPrioritizationWrapper.WeaponEffectivenessWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetThreatWeight, () => targetPrioritizationWrapper.TargetThreatWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.DistanceWeight, () => targetPrioritizationWrapper.DistanceWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.AngleWeight, () => targetPrioritizationWrapper.AngleWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetPriorityWeight, () => targetPrioritizationWrapper.TargetPriorityWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.AutoTargetStickyBias, () => targetPrioritizationWrapper.AutoTargetStickyBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.ManualTargetStickyBias, () => targetPrioritizationWrapper.ManualTargetStickyBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetSameCommanderBias, () => targetPrioritizationWrapper.TargetSameCommanderBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetWithinFOVBias, () => targetPrioritizationWrapper.TargetWithinFOVBias, x => Fixed64.UnsafeFromDouble(x));
+        }
+
+        public void outputWeaponDPS(WeaponAttributesWrapper weaponAttributesWrapper)
+        {
+            using (logger.BeginScope($"DPS info:"))
+            {
+                using (logger.BeginScope($"Weapon stats:"))
+                {
+                    logger.Log($"BaseDamagePerRound {weaponAttributesWrapper.BaseDamagePerRound}");
+                    logger.Log($"RateOfFire {weaponAttributesWrapper.RateOfFire}");
+                    logger.Log($"Burst: {weaponAttributesWrapper.BurstPeriodMinTimeMS} - {weaponAttributesWrapper.BurstPeriodMaxTimeMS}");
+                    logger.Log($"NumberOfBursts {weaponAttributesWrapper.NumberOfBursts}");
+                    logger.Log($"CooldownTimeMS: {weaponAttributesWrapper.CooldownTimeMS}");
+                    logger.Log($"WindUpTimeMS: {weaponAttributesWrapper.WindUpTimeMS}");
+                    logger.Log($"WindDownTimeMS: {weaponAttributesWrapper.WindDownTimeMS}");
+                    logger.Log($"ReloadTimeMS {weaponAttributesWrapper.ReloadTimeMS}");
+                    logger.Log($"DamagePacketsPerShot {weaponAttributesWrapper.DamagePacketsPerShot}");
+                    logger.Log($"AreaOfEffectFalloffType {weaponAttributesWrapper.AreaOfEffectFalloffType}");
+                    logger.Log($"AreaOfEffectRadius {weaponAttributesWrapper.AreaOfEffectRadius}");
+                }
+
+                int burstVariance = weaponAttributesWrapper.BurstPeriodMaxTimeMS - weaponAttributesWrapper.BurstPeriodMinTimeMS;
+
+                int shotDuration = Math.Max(1, 1000 / weaponAttributesWrapper.RateOfFire);
+
+                int shotsMin = Math.Max(1, weaponAttributesWrapper.BurstPeriodMinTimeMS / shotDuration);
+                int shotsMax = Math.Max(1, weaponAttributesWrapper.BurstPeriodMaxTimeMS / shotDuration);
+
+                int lowBracket = Math.Min(weaponAttributesWrapper.BurstPeriodMinTimeMS, shotDuration - 1 - (weaponAttributesWrapper.BurstPeriodMinTimeMS - shotsMin * shotDuration));
+                int midBracket = Math.Max(0, shotsMax - shotsMin - 1) * shotDuration;
+                int highBracket = shotsMin < shotsMax ? weaponAttributesWrapper.BurstPeriodMaxTimeMS - shotsMax * shotDuration + 1 : 0;
+
+                double avgBurst = (weaponAttributesWrapper.BurstPeriodMaxTimeMS + weaponAttributesWrapper.BurstPeriodMinTimeMS) * 0.5;
+
+                double averageShotsPerBurst = burstVariance == 0 ? shotsMin : (double)(shotsMin * lowBracket + (shotsMax + shotsMin) / 2 * midBracket + shotsMax * highBracket) / burstVariance;
+                double trueROF = averageShotsPerBurst / avgBurst * 1000;
+
+                double sequenceDuration = (weaponAttributesWrapper.WindUpTimeMS + (avgBurst + weaponAttributesWrapper.CooldownTimeMS) * (weaponAttributesWrapper.NumberOfBursts - 1) + avgBurst + weaponAttributesWrapper.ReloadTimeMS) / 1000;
+
+                logger.Log($"averageShotsPerBurst: {averageShotsPerBurst:F4}");
+                logger.Log($"trueROF: {trueROF:F4}");
+                logger.Log($"sequenceDuration: {sequenceDuration:F4}");
+
+                for (double armor = 0; armor <= 18; armor += 6)
+                {
+                    using (logger.BeginScope($"Armor {armor} DPS:"))
+                    {
+                        double dps = Math.Max(1, Fixed64.UnsafeDoubleValue(weaponAttributesWrapper.BaseDamagePerRound) - armor * weaponAttributesWrapper.DamagePacketsPerShot) * averageShotsPerBurst * weaponAttributesWrapper.NumberOfBursts / sequenceDuration;
+                        foreach (var range in weaponAttributesWrapper.Ranges)
+                        {
+                            logger.Log($"{range.Range,6} ({range.Distance,5:D} /{(int)Fixed64.UnsafeDoubleValue(range.Accuracy),3:D}%): {dps * Fixed64.UnsafeDoubleValue(range.Accuracy) / 100:F4}");
+                        }
+                    }
+                }
+            }
+        }
+
         public void ApplyUnitHangarAttributesPatch(UnitHangarAttributesPatch unitHangarPatch, UnitHangarAttributesWrapper unitHangarWrapper)
         {
             applyPropertyPatch(unitHangarPatch.AlignmentTime, () => unitHangarWrapper.AlignmentTime, x => Fixed64.UnsafeFromDouble(x));
@@ -831,6 +873,17 @@ namespace Subsystem
             applyPropertyPatch(hangarBayPatch.DockReceivingYOffset, () => hangarBayWrapper.DockReceivingYOffset, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(hangarBayPatch.DoorAnimationSeconds, () => hangarBayWrapper.DoorAnimationSeconds, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(hangarBayPatch.UndockLiftTime, () => hangarBayWrapper.UndockLiftTime, x => Fixed64.UnsafeFromDouble(x));
+        }
+
+        public void ApplyDetectableAttributesPatch(DetectableAttributesPatch detectablePatch, DetectableAttributesWrapper detectableWrapper)
+        {
+            applyPropertyPatch(detectablePatch.DisplayLastKnownLocation, () => detectableWrapper.DisplayLastKnownLocation);
+            applyPropertyPatch(detectablePatch.LastKnownDuration, () => detectableWrapper.LastKnownDuration, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(detectablePatch.TimeVisibleAfterFiring, () => detectableWrapper.TimeVisibleAfterFiring);
+            applyPropertyPatch(detectablePatch.AlwaysVisible, () => detectableWrapper.AlwaysVisible);
+            applyPropertyPatch(detectablePatch.MinimumStateAfterDetection, () => detectableWrapper.MinimumStateAfterDetection);
+            applyPropertyPatch(detectablePatch.FOWFadeDuration, () => detectableWrapper.FOWFadeDuration, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(detectablePatch.SetHasBeenSeenBeforeOnSpawn, () => detectableWrapper.SetHasBeenSeenBeforeOnSpawn);
         }
 
         public void ApplyUnitMovementAttributesPatch(UnitMovementAttributesPatch unitMovementAttributesPatch, UnitMovementAttributesWrapper unitMovementAttributesWrapper)
