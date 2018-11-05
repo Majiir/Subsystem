@@ -510,7 +510,7 @@ namespace Subsystem
 
             if (weaponAttributesPatch.OutputDPS == true)
             {
-                outputWeaponDPS(weaponAttributesWrapper);
+                OutputWeaponDPS(weaponAttributesWrapper);
             }
         }
 
@@ -601,7 +601,7 @@ namespace Subsystem
             applyPropertyPatch(turretPatch.RotationSpeed, () => turretWrapper.RotationSpeed, x => Fixed64.UnsafeFromDouble(x));
         }
         
-        public void outputWeaponDPS(WeaponAttributesWrapper weaponAttributesWrapper)
+        public void OutputWeaponDPS(WeaponAttributesWrapper weaponAttributesWrapper)
         {
             using (logger.BeginScope($"DPS info:"))
             {
