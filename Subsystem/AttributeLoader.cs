@@ -489,7 +489,8 @@ namespace Subsystem
             {
                 using (logger.BeginScope($"Turret:"))
                 {
-                    var turretWrapper = new TurretAttributesWrapper(weaponAttributesWrapper.Turret);
+                    var turret = weaponAttributesWrapper.Turret;
+                    var turretWrapper = new TurretAttributesWrapper(turret);
 
                     ApplyTurretAttributesPatch(weaponAttributesPatch.Turret, turretWrapper);
 
