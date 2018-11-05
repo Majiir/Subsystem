@@ -50,6 +50,7 @@
     <Compile Include="Patch\ExperienceLevelAttributesPatch.cs" />
     <Compile Include="Patch\InventoryAttributesPatch.cs" />
     <Compile Include="Patch\StorageAttributesPatch.cs" />
+    <Compile Include="Patch\TargetPrioritizationAttributesPatch.cs" />
     <Compile Include="Patch\TurretAttributesPatch.cs" />
     <Compile Include="Patch\WeaponModifierInfoPatch.cs" />
     <Compile Include="Wrappers\AbilityAttributesWrapper.cs" />
@@ -57,6 +58,7 @@
     <Compile Include="Patch\AttributesPatch.cs" />
     <Compile Include="Wrappers\AttributeBuffSetWrapper.cs" />
     <Compile Include="Wrappers\AttributeBuffWrapper.cs" />
+    <Compile Include="Wrappers\TargetPrioritizationAttributesWrapper.cs" />
     <Compile Include="Wrappers\CostAttributesWrapper.cs" />
     <Compile Include="Patch\EntityTypePatch.cs" />
     <Compile Include="Patch\HangarBayPatch.cs" />

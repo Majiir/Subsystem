@@ -507,6 +507,18 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.ActiveStatusEffectsIndex, () => weaponAttributesWrapper.ActiveStatusEffectsIndex);
 
             applyEntityTypesToSpawnOnImpact(weaponAttributesPatch, weaponAttributesWrapper);
+
+            if (weaponAttributesPatch.TargetPrioritizationAttributes != null)
+            {
+                using (logger.BeginScope($"TargetPrioritizationAttributes:"))
+                {
+                    var targetPrioritizationWrapper = new TargetPriorizationAttributesWrapper(weaponAttributesWrapper.TargetPriorizationAttributes);
+
+                    ApplyTargetPrioritizationAttributesPatch(weaponAttributesPatch.TargetPrioritizationAttributes, targetPrioritizationWrapper);
+
+                    weaponAttributesWrapper.TargetPriorizationAttributes = targetPrioritizationWrapper;
+                }
+            }
         }
 
         private void applyWeaponModifiers(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
@@ -596,6 +608,19 @@ namespace Subsystem
             applyPropertyPatch(turretPatch.RotationSpeed, () => turretWrapper.RotationSpeed, x => Fixed64.UnsafeFromDouble(x));
         }
 
+        public void ApplyTargetPrioritizationAttributesPatch(TargetPrioritizationAttributesPatch targetPrioritizationPatch, TargetPriorizationAttributesWrapper targetPrioritizationWrapper)
+        {
+            applyPropertyPatch(targetPrioritizationPatch.WeaponEffectivenessWeight, () => targetPrioritizationWrapper.WeaponEffectivenessWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetThreatWeight, () => targetPrioritizationWrapper.TargetThreatWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.DistanceWeight, () => targetPrioritizationWrapper.DistanceWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.AngleWeight, () => targetPrioritizationWrapper.AngleWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetPriorityWeight, () => targetPrioritizationWrapper.TargetPriorityWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.AutoTargetStickyBias, () => targetPrioritizationWrapper.AutoTargetStickyBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.ManualTargetStickyBias, () => targetPrioritizationWrapper.ManualTargetStickyBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetSameCommanderBias, () => targetPrioritizationWrapper.TargetSameCommanderBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetWithinFOVBias, () => targetPrioritizationWrapper.TargetWithinFOVBias, x => Fixed64.UnsafeFromDouble(x));
+        }
+        
         public void ApplyUnitHangarAttributesPatch(UnitHangarAttributesPatch unitHangarPatch, UnitHangarAttributesWrapper unitHangarWrapper)
         {
             applyPropertyPatch(unitHangarPatch.AlignmentTime, () => unitHangarWrapper.AlignmentTime, x => Fixed64.UnsafeFromDouble(x));
