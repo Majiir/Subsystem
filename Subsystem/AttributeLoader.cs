@@ -785,10 +785,10 @@ namespace Subsystem
                     logger.Log($"CooldownTimeMS: {weaponAttributesWrapper.CooldownTimeMS}");
                     logger.Log($"WindUpTimeMS: {weaponAttributesWrapper.WindUpTimeMS}");
                     logger.Log($"WindDownTimeMS: {weaponAttributesWrapper.WindDownTimeMS}");
-                    logger.Log($"ReloadTimeMS {weaponAttributesWrapper.ReloadTimeMS}");
-                    logger.Log($"DamagePacketsPerShot {weaponAttributesWrapper.DamagePacketsPerShot}");
-                    logger.Log($"AreaOfEffectFalloffType {weaponAttributesWrapper.AreaOfEffectFalloffType}");
-                    logger.Log($"AreaOfEffectRadius {weaponAttributesWrapper.AreaOfEffectRadius}");
+                    logger.Log($"ReloadTimeMS: {weaponAttributesWrapper.ReloadTimeMS}");
+                    logger.Log($"DamagePacketsPerShot: {weaponAttributesWrapper.DamagePacketsPerShot}");
+                    logger.Log($"AreaOfEffectFalloffType: {weaponAttributesWrapper.AreaOfEffectFalloffType}");
+                    logger.Log($"AreaOfEffectRadius: {weaponAttributesWrapper.AreaOfEffectRadius}");
                 }
 
                 int burstVariance = weaponAttributesWrapper.BurstPeriodMaxTimeMS - weaponAttributesWrapper.BurstPeriodMinTimeMS;
