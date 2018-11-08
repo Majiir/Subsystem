@@ -63,6 +63,7 @@ namespace Subsystem
                     applyUnnamedComponentPatch<UnitAttributesPatch, UnitAttributes, UnitAttributesWrapper>(entityType, entityTypePatch.UnitAttributes, x => new UnitAttributesWrapper(x), ApplyUnitAttributesPatch);
                     applyUnnamedComponentPatch<ResearchItemAttributesPatch, ResearchItemAttributes, ResearchItemAttributesWrapper>(entityType, entityTypePatch.ResearchItemAttributes, x => new ResearchItemAttributesWrapper(x), ApplyResearchItemAttributesPatch);
                     applyUnnamedComponentPatch<UnitHangarAttributesPatch, UnitHangarAttributes, UnitHangarAttributesWrapper>(entityType, entityTypePatch.UnitHangarAttributes, x => new UnitHangarAttributesWrapper(x), ApplyUnitHangarAttributesPatch);
+                    applyUnnamedComponentPatch<DetectableAttributesPatch, DetectableAttributes, DetectableAttributesWrapper>(entityType, entityTypePatch.DetectableAttributes, x => new DetectableAttributesWrapper(x), ApplyDetectableAttributesPatch);
                     applyUnnamedComponentPatch<UnitMovementAttributesPatch, UnitMovementAttributes, UnitMovementAttributesWrapper>(entityType, entityTypePatch.UnitMovementAttributes, x => new UnitMovementAttributesWrapper(x), ApplyUnitMovementAttributesPatch);
 
                     applyNamedComponentPatch<AbilityAttributesPatch, AbilityAttributes, AbilityAttributesWrapper>(entityType, entityTypePatch.AbilityAttributes, x => new AbilityAttributesWrapper(x), ApplyAbilityAttributesPatch);
@@ -667,6 +668,17 @@ namespace Subsystem
             applyPropertyPatch(hangarBayPatch.DockReceivingYOffset, () => hangarBayWrapper.DockReceivingYOffset, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(hangarBayPatch.DoorAnimationSeconds, () => hangarBayWrapper.DoorAnimationSeconds, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(hangarBayPatch.UndockLiftTime, () => hangarBayWrapper.UndockLiftTime, x => Fixed64.UnsafeFromDouble(x));
+        }
+
+        public void ApplyDetectableAttributesPatch(DetectableAttributesPatch detectablePatch, DetectableAttributesWrapper detectableWrapper)
+        {
+            applyPropertyPatch(detectablePatch.DisplayLastKnownLocation, () => detectableWrapper.DisplayLastKnownLocation);
+            applyPropertyPatch(detectablePatch.LastKnownDuration, () => detectableWrapper.LastKnownDuration, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(detectablePatch.TimeVisibleAfterFiring, () => detectableWrapper.TimeVisibleAfterFiring);
+            applyPropertyPatch(detectablePatch.AlwaysVisible, () => detectableWrapper.AlwaysVisible);
+            applyPropertyPatch(detectablePatch.MinimumStateAfterDetection, () => detectableWrapper.MinimumStateAfterDetection);
+            applyPropertyPatch(detectablePatch.FOWFadeDuration, () => detectableWrapper.FOWFadeDuration, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(detectablePatch.SetHasBeenSeenBeforeOnSpawn, () => detectableWrapper.SetHasBeenSeenBeforeOnSpawn);
         }
 
         public void ApplyUnitMovementAttributesPatch(UnitMovementAttributesPatch unitMovementAttributesPatch, UnitMovementAttributesWrapper unitMovementAttributesWrapper)
