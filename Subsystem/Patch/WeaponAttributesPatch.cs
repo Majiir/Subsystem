@@ -1,4 +1,5 @@
 ﻿using BBI.Game.Data;
+using System.Collections.Generic;
 
 namespace Subsystem.Patch
 {
@@ -29,11 +30,13 @@ namespace Subsystem.Patch
         public RevealTrigger? RevealTriggers { get; set; }
         public UnitStatusAttackingTrigger? UnitStatusAttackingTriggers { get; set; }
         public WeaponTargetStyle? TargetStyle { get; set; }
+        public Dictionary<string, WeaponModifierInfoPatch> Modifiers { get; set; } = new Dictionary<string, WeaponModifierInfoPatch>();
         public AOEFalloffType? AreaOfEffectFalloffType { get; set; }
         public double? AreaOfEffectRadius { get; set; }
         public bool? ExcludeWeaponOwnerFromAreaOfEffect { get; set; }
         public double? FriendlyFireDamageScalar { get; set; }
         public double? WeaponOwnerFriendlyFireDamageScalar { get; set; }
+        public TurretAttributesPatch Turret { get; set; }
         public RangeBasedWeaponAttributesPatch RangeAttributesShort { get; set; }
         public RangeBasedWeaponAttributesPatch RangeAttributesMedium { get; set; }
         public RangeBasedWeaponAttributesPatch RangeAttributesLong { get; set; }
@@ -41,5 +44,7 @@ namespace Subsystem.Patch
         public AbilityTargetAlignment? StatusEffectsTargetAlignment { get; set; }
         public UnitClass? StatusEffectsExcludeTargetType { get; set; }
         public int? ActiveStatusEffectsIndex { get; set; }
+        public Dictionary<string, EntityTypeToSpawnAttributesPatch> EntityTypesToSpawnOnImpact { get; set; } = new Dictionary<string, EntityTypeToSpawnAttributesPatch>();
+        public TargetPrioritizationAttributesPatch TargetPrioritizationAttributes { get; set; }
     }
 }

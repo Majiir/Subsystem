@@ -42,22 +42,43 @@
     <Reference Include="UnityEngine" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IRemovable.cs" />
     <Compile Include="Patch\AbilityAttributesPatch.cs" />
+    <Compile Include="Patch\AttributeBuffPatch.cs" />
+    <Compile Include="Patch\EntityTypeToSpawnAttributesPatch.cs" />
+    <Compile Include="Patch\ExperienceAttributesPatch.cs" />
+    <Compile Include="Patch\ExperienceLevelAttributesPatch.cs" />
+    <Compile Include="Patch\InventoryAttributesPatch.cs" />
+    <Compile Include="Patch\StorageAttributesPatch.cs" />
+    <Compile Include="Patch\TargetPrioritizationAttributesPatch.cs" />
+    <Compile Include="Patch\TurretAttributesPatch.cs" />
+    <Compile Include="Patch\DetectableAttributesPatch.cs" />
+    <Compile Include="Patch\WeaponModifierInfoPatch.cs" />
     <Compile Include="Wrappers\AbilityAttributesWrapper.cs" />
     <Compile Include="AttributeLoader.cs" />
     <Compile Include="Patch\AttributesPatch.cs" />
+    <Compile Include="Wrappers\AttributeBuffSetWrapper.cs" />
+    <Compile Include="Wrappers\AttributeBuffWrapper.cs" />
+    <Compile Include="Wrappers\TargetPrioritizationAttributesWrapper.cs" />
+    <Compile Include="Wrappers\DetectableAttributesWrapper.cs" />
     <Compile Include="Wrappers\CostAttributesWrapper.cs" />
     <Compile Include="Patch\EntityTypePatch.cs" />
     <Compile Include="Patch\HangarBayPatch.cs" />
+    <Compile Include="Wrappers\EntityTypeToSpawnAttributesWrapper.cs" />
+    <Compile Include="Wrappers\ExperienceAttributesWrapper.cs" />
+    <Compile Include="Wrappers\ExperienceLevelAttributesWrapper.cs" />
     <Compile Include="Wrappers\HangarBayWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyAccessor.cs" />
     <Compile Include="Patch\RangeBasedWeaponAttributesPatch.cs" />
+    <Compile Include="Wrappers\InventoryAttributesWrapper.cs" />
     <Compile Include="Wrappers\RangeBasedWeaponAttributesWrapper.cs" />
     <Compile Include="Patch\ResearchItemAttributesPatch.cs" />
     <Compile Include="Wrappers\ResearchItemAttributesWrapper.cs" />
     <Compile Include="StringLogger.cs" />
     <Compile Include="Patch\UnitAttributesPatch.cs" />
+    <Compile Include="Wrappers\StorageAttributesWrapper.cs" />
+    <Compile Include="Wrappers\TurretAttributesWrapper.cs" />
     <Compile Include="Wrappers\UnitAttributesWrapper.cs" />
     <Compile Include="Patch\UnitDynamicsAttributesPatch.cs" />
     <Compile Include="Wrappers\UnitDynamicsAttributesWrapper.cs" />
@@ -67,6 +88,7 @@
     <Compile Include="Wrappers\UnitMovementAttributesWrapper.cs" />
     <Compile Include="Patch\WeaponAttributesPatch.cs" />
     <Compile Include="Wrappers\WeaponAttributesWrapper.cs" />
+    <Compile Include="Wrappers\WeaponModifierInfoWrapper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

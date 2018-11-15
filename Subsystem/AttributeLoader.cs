@@ -6,6 +6,7 @@ using LitJson;
 using Subsystem.Patch;
 using Subsystem.Wrappers;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -15,9 +16,16 @@ namespace Subsystem
 {
     public class AttributeLoader
     {
-        private readonly StringLogger logger = new StringLogger();
+        private readonly StringWriter writer;
+        private readonly StringLogger logger;
 
-        public static void LoadAttributes(EntityTypeCollection entityTypeCollection)
+        public AttributeLoader()
+        {
+            writer = new StringWriter();
+            logger = new StringLogger(writer);
+        }
+
+        public void LoadAttributes(EntityTypeCollection entityTypeCollection)
         {
             try
             {
@@ -26,8 +34,7 @@ namespace Subsystem
 
                 var attributesPatch = JsonMapper.ToObject<AttributesPatch>(json);
 
-                var loader = new AttributeLoader();
-                loader.ApplyAttributesPatch(entityTypeCollection, attributesPatch);
+                ApplyAttributesPatch(entityTypeCollection, attributesPatch);
             }
             catch (Exception e)
             {
@@ -52,108 +59,72 @@ namespace Subsystem
                         continue;
                     }
 
-                    if (entityTypePatch.UnitAttributes != null)
+                    applyUnnamedComponentPatch<ExperienceAttributesPatch, ExperienceAttributes, ExperienceAttributesWrapper>(entityType, entityTypePatch.ExperienceAttributes, x => new ExperienceAttributesWrapper(x), ApplyExperienceAttributesPatch);
+                    applyUnnamedComponentPatch<UnitAttributesPatch, UnitAttributes, UnitAttributesWrapper>(entityType, entityTypePatch.UnitAttributes, x => new UnitAttributesWrapper(x), ApplyUnitAttributesPatch);
+                    applyUnnamedComponentPatch<ResearchItemAttributesPatch, ResearchItemAttributes, ResearchItemAttributesWrapper>(entityType, entityTypePatch.ResearchItemAttributes, x => new ResearchItemAttributesWrapper(x), ApplyResearchItemAttributesPatch);
+                    applyUnnamedComponentPatch<UnitHangarAttributesPatch, UnitHangarAttributes, UnitHangarAttributesWrapper>(entityType, entityTypePatch.UnitHangarAttributes, x => new UnitHangarAttributesWrapper(x), ApplyUnitHangarAttributesPatch);
+                    applyUnnamedComponentPatch<DetectableAttributesPatch, DetectableAttributes, DetectableAttributesWrapper>(entityType, entityTypePatch.DetectableAttributes, x => new DetectableAttributesWrapper(x), ApplyDetectableAttributesPatch);
+                    applyUnnamedComponentPatch<UnitMovementAttributesPatch, UnitMovementAttributes, UnitMovementAttributesWrapper>(entityType, entityTypePatch.UnitMovementAttributes, x => new UnitMovementAttributesWrapper(x), ApplyUnitMovementAttributesPatch);
+
+                    applyNamedComponentPatch<AbilityAttributesPatch, AbilityAttributes, AbilityAttributesWrapper>(entityType, entityTypePatch.AbilityAttributes, x => new AbilityAttributesWrapper(x), ApplyAbilityAttributesPatch);
+                    applyNamedComponentPatch<StorageAttributesPatch, StorageAttributes, StorageAttributesWrapper>(entityType, entityTypePatch.StorageAttributes, x => new StorageAttributesWrapper(x), ApplyStorageAttributesPatch);
+                    applyNamedComponentPatch<WeaponAttributesPatch, WeaponAttributes, WeaponAttributesWrapper>(entityType, entityTypePatch.WeaponAttributes, x => new WeaponAttributesWrapper(x), (patch, wrapper) =>
                     {
-                        using (logger.BeginScope($"UnitAttributes:"))
-                        {
-                            var unitAttributes = entityType.Get<UnitAttributes>();
-                            var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
-
-                            ApplyUnitAttributesPatch(entityTypePatch.UnitAttributes, unitAttributesWrapper);
-
-                            entityType.Replace(unitAttributes, unitAttributesWrapper);
-                        }
-                    }
-
-                    if (entityTypePatch.ResearchItemAttributes != null)
-                    {
-                        using (logger.BeginScope($"ResearchItemAttributes:"))
-                        {
-                            var researchItemAttributes = entityType.Get<ResearchItemAttributes>();
-                            var researchItemAttributesWrapper = new ResearchItemAttributesWrapper(researchItemAttributes);
-
-                            ApplyResearchItemAttributesPatch(entityTypePatch.ResearchItemAttributes, researchItemAttributesWrapper);
-
-                            entityType.Replace(researchItemAttributes, researchItemAttributesWrapper);
-                        }
-                    }
-
-                    if (entityTypePatch.UnitHangarAttributes != null)
-                    {
-                        using (logger.BeginScope($"UnitHangarAttributes:"))
-                        {
-                            var unitHangarAttributes = entityType.Get<UnitHangarAttributes>();
-                            var unitHangarAttributesWrapper = new UnitHangarAttributesWrapper(unitHangarAttributes);
-
-                            ApplyUnitHangarAttributesPatch(entityTypePatch.UnitHangarAttributes, unitHangarAttributesWrapper);
-
-                            entityType.Replace(unitHangarAttributes, unitHangarAttributesWrapper);
-                        }
-                    }
-
-                    if (entityTypePatch.UnitMovementAttributes != null)
-                    {
-                        using (logger.BeginScope($"UnitMovementAttributes:"))
-                        {
-                            var unitMovementAttributes = entityType.Get<UnitMovementAttributes>();
-                            var unitMovementAttributesWrapper = new UnitMovementAttributesWrapper(unitMovementAttributes);
-
-                            ApplyUnitMovementAttributesPatch(entityTypePatch.UnitMovementAttributes, unitMovementAttributesWrapper);
-
-                            entityType.Replace(unitMovementAttributes, unitMovementAttributesWrapper);
-                        }
-                    }
-
-                    foreach (var kvp2 in entityTypePatch.AbilityAttributes)
-                    {
-                        var abilityAttributesName = kvp2.Key;
-                        var abilityAttributesPatch = kvp2.Value;
-
-                        using (logger.BeginScope($"AbilityAttributes: {abilityAttributesName}"))
-                        {
-                            var abilityAttributes = entityType.Get<AbilityAttributes>(abilityAttributesName);
-                            if (abilityAttributes == null)
-                            {
-                                logger.Log($"ERROR: AbilityAttributes not found");
-                                continue;
-                            }
-
-                            var abilityAttributesWrapper = new AbilityAttributesWrapper(abilityAttributes);
-
-                            ApplyAbilityAttributesPatch(abilityAttributesPatch, abilityAttributesWrapper);
-
-                            entityType.Replace(abilityAttributes, abilityAttributesWrapper);
-                        }
-                    }
-
-                    foreach (var kvp2 in entityTypePatch.WeaponAttributes)
-                    {
-                        var weaponAttributesName = kvp2.Key;
-                        var weaponAttributesPatch = kvp2.Value;
-
-                        using (logger.BeginScope($"WeaponAttributes: {weaponAttributesName}"))
-                        {
-                            var weaponAttributes = entityType.Get<WeaponAttributes>(weaponAttributesName);
-                            if (weaponAttributes == null)
-                            {
-                                logger.Log($"ERROR: WeaponAttributes not found");
-                                continue;
-                            }
-
-                            var weaponAttributesWrapper = new WeaponAttributesWrapper(weaponAttributes);
-
-                            ApplyWeaponAttributesPatch(weaponAttributesPatch, weaponAttributesWrapper);
-
-                            entityType.Replace(weaponAttributes, weaponAttributesWrapper);
-
-                            rebindWeaponAttributes(entityType, weaponAttributesWrapper);
-                        }
-                    }
+                        ApplyWeaponAttributesPatch(patch, wrapper);
+                        rebindWeaponAttributes(entityType, wrapper);
+                    });
                 }
             }
 
-            File.WriteAllText(Path.Combine(Application.dataPath, "Subsystem.log"), logger.GetLog());
+            File.WriteAllText(Path.Combine(Application.dataPath, "Subsystem.log"), writer.ToString());
             Debug.Log($"[SUBSYSTEM] Applied attributes patch. See Subsystem.log for details.");
+        }
+
+        private void applyUnnamedComponentPatch<TPatch, TAttributes, TWrapper>(EntityTypeAttributes entityType, TPatch patch, Func<TAttributes, TWrapper> createWrapper, Action<TPatch, TWrapper> applyPatch)
+            where TAttributes : class
+            where TWrapper : TAttributes
+        {
+            if (patch != null)
+            {
+                applyComponentPatch(entityType, patch, createWrapper, applyPatch);
+            }
+        }
+
+        private void applyNamedComponentPatch<TPatch, TAttributes, TWrapper>(EntityTypeAttributes entityType, Dictionary<string, TPatch> patch, Func<TAttributes, TWrapper> createWrapper, Action<TPatch, TWrapper> applyPatch)
+            where TAttributes : class
+            where TWrapper : TAttributes
+        {
+            foreach (var kvp in patch)
+            {
+                var elementName = kvp.Key;
+                var elementPatch = kvp.Value;
+
+                applyComponentPatch(entityType, elementPatch, createWrapper, applyPatch, elementName);
+            }
+        }
+
+        private void applyComponentPatch<TPatch, TAttributes, TWrapper>(EntityTypeAttributes entityType, TPatch patch, Func<TAttributes, TWrapper> createWrapper, Action<TPatch, TWrapper> applyPatch, string name = null)
+            where TAttributes : class
+            where TWrapper : TAttributes
+        {
+            using (logger.BeginScope($"{typeof(TAttributes).Name}: {name}"))
+            {
+                var attributes = name != null
+                    ? entityType.Get<TAttributes>(name)
+                    : entityType.Get<TAttributes>();
+
+                if (attributes == null)
+                {
+                    logger.Log($"ERROR: {typeof(TAttributes).Name} not found");
+                    return;
+                }
+
+                var wrapper = createWrapper(attributes);
+
+                applyPatch(patch, wrapper);
+
+                entityType.Replace(attributes, wrapper);
+            }
         }
 
         private void applyPropertyPatch<TProperty>(TProperty? newValue, Expression<Func<TProperty>> expression) where TProperty : struct
@@ -224,6 +195,103 @@ namespace Subsystem
                     }
                 }
             }
+        }
+
+        public void ApplyExperienceAttributesPatch(ExperienceAttributesPatch experienceAttributesPatch, ExperienceAttributesWrapper experienceAttributesWrapper)
+        {
+            var wrappers = experienceAttributesWrapper.Levels.Select(x => new ExperienceLevelAttributesWrapper(x)).ToList();
+
+            applyExperienceLevelsPatch(experienceAttributesPatch.Levels, wrappers);
+
+            experienceAttributesWrapper.Levels = wrappers.ToArray();
+        }
+
+        private void applyListPatch<TPatch, TWrapper>(Dictionary<string, TPatch> patch, List<TWrapper> wrappers, Func<TWrapper> createWrapper, Action<TPatch, TWrapper> applyPatch, string elementName)
+            where TWrapper : class
+        {
+            foreach (var kvp in patch.OrderBy(x => x.Key))
+            {
+                if (!int.TryParse(kvp.Key, out var index))
+                {
+                    logger.Log($"ERROR: Non-integer key: {kvp.Key}");
+                    break;
+                }
+
+                var elementPatch = kvp.Value;
+
+                using (logger.BeginScope($"{elementName}: {index}"))
+                {
+                    var remove = elementPatch is IRemovable removable && removable.Remove;
+
+                    if (index < wrappers.Count)
+                    {
+                        if (remove)
+                        {
+                            logger.Log("(removed)");
+                            wrappers[index] = null;
+                            continue;
+                        }
+
+                        var elementWrapper = wrappers[index];
+
+                        applyPatch(elementPatch, elementWrapper);
+
+                        wrappers[index] = elementWrapper;
+                    }
+                    else if (index == wrappers.Count)
+                    {
+                        if (remove)
+                        {
+                            logger.Log("WARNING: Remove flag set for non-existent entry");
+                            continue;
+                        }
+
+                        logger.Log("(created)");
+                        var elementWrapper = createWrapper(); // Deal with INamed?
+
+                        applyPatch(elementPatch, elementWrapper);
+
+                        wrappers.Add(elementWrapper);
+                    }
+                    else // if (index > wrappers.Count)
+                    {
+                        logger.Log("ERROR: Non-consecutive index");
+                        continue;
+                    }
+                }
+            }
+
+            wrappers.RemoveAll(x => x == null);
+        }
+
+        private void applyExperienceLevelsPatch(Dictionary<string, ExperienceLevelAttributesPatch> patch, List<ExperienceLevelAttributesWrapper> wrappers)
+        {
+            applyListPatch(patch, wrappers, () => new ExperienceLevelAttributesWrapper(), ApplyExperienceLevelAttributesPatch, nameof(ExperienceLevelAttributes));
+        }
+
+        public void ApplyExperienceLevelAttributesPatch(ExperienceLevelAttributesPatch experienceLevelAttributesPatch, ExperienceLevelAttributesWrapper experienceLevelAttributesWrapper)
+        {
+            applyPropertyPatch(experienceLevelAttributesPatch.BuffTooltipLocID, () => experienceLevelAttributesWrapper.BuffTooltipLocID);
+            applyPropertyPatch(experienceLevelAttributesPatch.RequiredExperience, () => experienceLevelAttributesWrapper.RequiredExperience);
+
+            var attributeBuffSetWrapper = new AttributeBuffSetWrapper(experienceLevelAttributesWrapper.Buff);
+            experienceLevelAttributesWrapper.Buff = attributeBuffSetWrapper;
+
+            applyAttributeBuffSetPatch(experienceLevelAttributesPatch.Buff, attributeBuffSetWrapper);
+        }
+
+        private void applyAttributeBuffSetPatch(Dictionary<string, AttributeBuffPatch> patch, AttributeBuffSetWrapper wrapper)
+        {
+            applyListPatch(patch, wrapper.Buffs, () => new AttributeBuffWrapper(), applyAttributeBuffPatch, nameof(AttributeBuff));
+        }
+
+        private void applyAttributeBuffPatch(AttributeBuffPatch patch, AttributeBuffWrapper wrapper)
+        {
+            applyPropertyPatch(patch.Name, () => wrapper.Name);
+            applyPropertyPatch(patch.Attribute, () => wrapper.AttributeID, Buff.AttributeIDFromBuffCategoryAndID);
+            applyPropertyPatch(patch.Attribute, () => wrapper.Category, Buff.CategoryFromBuffCategoryAndID);
+            applyPropertyPatch(patch.Mode, () => wrapper.Mode);
+            applyPropertyPatch(patch.Value, () => wrapper.Value);
         }
 
         public void ApplyUnitAttributesPatch(UnitAttributesPatch unitAttributesPatch, UnitAttributesWrapper unitAttributesWrapper)
@@ -316,6 +384,71 @@ namespace Subsystem
             applyPropertyPatch(abilityAttributesPatch.Resource2Cost, () => cost.Resource2Cost);
         }
 
+        public void ApplyStorageAttributesPatch(StorageAttributesPatch storageAttributesPatch, StorageAttributesWrapper storageAttributesWrapper)
+        {
+            applyPropertyPatch(storageAttributesPatch.LinkToPlayerBank, () => storageAttributesWrapper.LinkToPlayerBank);
+            applyPropertyPatch(storageAttributesPatch.IsResourceController, () => storageAttributesWrapper.IsResourceController);
+
+            var loadout = storageAttributesWrapper.InventoryLoadout.ToList();
+
+            foreach (var kvp in storageAttributesPatch.InventoryLoadout)
+            {
+                var inventoryId = kvp.Key;
+                var inventoryPatch = kvp.Value;
+
+                using (logger.BeginScope($"InventoryBinding: {inventoryId}"))
+                {
+                    var index = loadout.FindIndex(b => b.InventoryID == inventoryId);
+
+                    InventoryAttributesWrapper inventoryAttributesWrapper;
+
+                    if (index < 0)
+                    {
+                        index = loadout.Count;
+
+                        var name = $"SUBSYSTEM-{storageAttributesWrapper.Name}-{inventoryId}";
+                        logger.Log($"(created InventoryAttributes: {name})");
+
+                        inventoryAttributesWrapper = new InventoryAttributesWrapper(
+                            name: name,
+                            inventoryId: inventoryId
+                        );
+                    }
+                    else
+                    {
+                        var inventoryBinding = loadout[index];
+                        inventoryAttributesWrapper = new InventoryAttributesWrapper(inventoryBinding.InventoryAttributes);
+                    }
+
+                    ApplyInventoryAttributesPatch(inventoryPatch, inventoryAttributesWrapper);
+
+                    var newBinding = new InventoryBinding(
+                        inventoryID: inventoryId,
+                        inventoryBindingIndex: index,
+                        inventoryAttributes: inventoryAttributesWrapper
+                    );
+
+                    if (index == loadout.Count)
+                    {
+                        loadout.Add(newBinding);
+                    }
+                    else
+                    {
+                        loadout[index] = newBinding;
+                    }
+                }
+            }
+
+            storageAttributesWrapper.InventoryLoadout = loadout.ToArray();
+        }
+
+        private void ApplyInventoryAttributesPatch(InventoryAttributesPatch inventoryPatch, InventoryAttributesWrapper inventoryAttributesWrapper)
+        {
+            applyPropertyPatch(inventoryPatch.Capacity, () => inventoryAttributesWrapper.Capacity);
+            applyPropertyPatch(inventoryPatch.HasUnlimitedCapacity, () => inventoryAttributesWrapper.HasUnlimitedCapacity);
+            applyPropertyPatch(inventoryPatch.StartingAmount, () => inventoryAttributesWrapper.StartingAmount);
+        }
+
         public void ApplyWeaponAttributesPatch(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
         {
             applyPropertyPatch(weaponAttributesPatch.ExcludeFromAutoTargetAcquisition, () => weaponAttributesWrapper.ExcludeFromAutoTargetAcquisition);
@@ -343,11 +476,27 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.RevealTriggers, () => weaponAttributesWrapper.RevealTriggers);
             applyPropertyPatch(weaponAttributesPatch.UnitStatusAttackingTriggers, () => weaponAttributesWrapper.UnitStatusAttackingTriggers);
             applyPropertyPatch(weaponAttributesPatch.TargetStyle, () => weaponAttributesWrapper.TargetStyle);
+
+            applyWeaponModifiers(weaponAttributesPatch, weaponAttributesWrapper);
+
             applyPropertyPatch(weaponAttributesPatch.AreaOfEffectFalloffType, () => weaponAttributesWrapper.AreaOfEffectFalloffType);
             applyPropertyPatch(weaponAttributesPatch.AreaOfEffectRadius, () => weaponAttributesWrapper.AreaOfEffectRadius, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(weaponAttributesPatch.ExcludeWeaponOwnerFromAreaOfEffect, () => weaponAttributesWrapper.ExcludeWeaponOwnerFromAreaOfEffect);
             applyPropertyPatch(weaponAttributesPatch.FriendlyFireDamageScalar, () => weaponAttributesWrapper.FriendlyFireDamageScalar, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(weaponAttributesPatch.WeaponOwnerFriendlyFireDamageScalar, () => weaponAttributesWrapper.WeaponOwnerFriendlyFireDamageScalar, x => Fixed64.UnsafeFromDouble(x));
+
+            if (weaponAttributesPatch.Turret != null)
+            {
+                using (logger.BeginScope($"Turret:"))
+                {
+                    var turret = weaponAttributesWrapper.Turret;
+                    var turretWrapper = new TurretAttributesWrapper(turret);
+
+                    ApplyTurretAttributesPatch(weaponAttributesPatch.Turret, turretWrapper);
+
+                    weaponAttributesWrapper.Turret = turretWrapper;
+                }
+            }
 
             applyRangeAttributes(WeaponRange.Short, weaponAttributesPatch.RangeAttributesShort, weaponAttributesWrapper);
             applyRangeAttributes(WeaponRange.Medium, weaponAttributesPatch.RangeAttributesMedium, weaponAttributesWrapper);
@@ -357,6 +506,52 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsTargetAlignment, () => weaponAttributesWrapper.StatusEffectsTargetAlignment);
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsExcludeTargetType, () => weaponAttributesWrapper.StatusEffectsExcludeTargetType);
             applyPropertyPatch(weaponAttributesPatch.ActiveStatusEffectsIndex, () => weaponAttributesWrapper.ActiveStatusEffectsIndex);
+
+            applyEntityTypesToSpawnOnImpact(weaponAttributesPatch, weaponAttributesWrapper);
+
+            if (weaponAttributesPatch.TargetPrioritizationAttributes != null)
+            {
+                using (logger.BeginScope($"TargetPrioritizationAttributes:"))
+                {
+                    var targetPrioritizationWrapper = new TargetPriorizationAttributesWrapper(weaponAttributesWrapper.TargetPriorizationAttributes);
+
+                    ApplyTargetPrioritizationAttributesPatch(weaponAttributesPatch.TargetPrioritizationAttributes, targetPrioritizationWrapper);
+
+                    weaponAttributesWrapper.TargetPriorizationAttributes = targetPrioritizationWrapper;
+                }
+            }
+        }
+
+        private void applyWeaponModifiers(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
+        {
+            var modifiers = weaponAttributesWrapper.Modifiers.Select(x => new WeaponModifierInfoWrapper(x)).ToList();
+
+            applyListPatch(weaponAttributesPatch.Modifiers, modifiers, () => new WeaponModifierInfoWrapper(), ApplyWeaponModifierInfoPatch, nameof(WeaponModifierInfo));
+
+            weaponAttributesWrapper.Modifiers = modifiers.ToArray();
+        }
+
+        public void ApplyWeaponModifierInfoPatch(WeaponModifierInfoPatch weaponModifierInfoPatch, WeaponModifierInfoWrapper weaponModifierInfoWrapper)
+        {
+            applyPropertyPatch(weaponModifierInfoPatch.TargetClass, () => weaponModifierInfoWrapper.TargetClass);
+            applyPropertyPatch(weaponModifierInfoPatch.ClassOperator, () => weaponModifierInfoWrapper.ClassOperator);
+            applyPropertyPatch(weaponModifierInfoPatch.Modifier, () => weaponModifierInfoWrapper.Modifier);
+            applyPropertyPatch(weaponModifierInfoPatch.Amount, () => weaponModifierInfoWrapper.Amount);
+        }
+
+        private void applyEntityTypesToSpawnOnImpact(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
+        {
+            var wrappers = weaponAttributesWrapper.EntityTypesToSpawnOnImpact.Select(x => new EntityTypeToSpawnAttributesWrapper(x)).ToList();
+
+            applyListPatch(weaponAttributesPatch.EntityTypesToSpawnOnImpact, wrappers, () => new EntityTypeToSpawnAttributesWrapper(), ApplyEntityTypeToSpawnAttributesPatch, nameof(EntityTypeToSpawnAttributes));
+
+            weaponAttributesWrapper.EntityTypesToSpawnOnImpact = wrappers.Where(x => x != null).ToArray();
+        }
+
+        public void ApplyEntityTypeToSpawnAttributesPatch(EntityTypeToSpawnAttributesPatch patch, EntityTypeToSpawnAttributesWrapper wrapper)
+        {
+            applyPropertyPatch(patch.EntityTypeToSpawn, () => wrapper.EntityTypeToSpawn);
+            applyPropertyPatch(patch.SpawnRotationOffsetDegrees, () => wrapper.SpawnRotationOffsetDegrees, Fixed64.UnsafeFromDouble);
         }
 
         private void applyRangeAttributes(WeaponRange weaponRange, RangeBasedWeaponAttributesPatch rangePatch, WeaponAttributesWrapper weaponWrapper)
@@ -407,6 +602,26 @@ namespace Subsystem
             applyPropertyPatch(rangePatch.MinDistance, () => rangeWrapper.MinDistance, x => Fixed64.UnsafeFromDouble(x));
         }
 
+        public void ApplyTurretAttributesPatch(TurretAttributesPatch turretPatch, TurretAttributesWrapper turretWrapper)
+        {
+            applyPropertyPatch(turretPatch.FieldOfFire, () => turretWrapper.FieldOfFire, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(turretPatch.FieldOfView, () => turretWrapper.FieldOfView, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(turretPatch.RotationSpeed, () => turretWrapper.RotationSpeed, x => Fixed64.UnsafeFromDouble(x));
+        }
+
+        public void ApplyTargetPrioritizationAttributesPatch(TargetPrioritizationAttributesPatch targetPrioritizationPatch, TargetPriorizationAttributesWrapper targetPrioritizationWrapper)
+        {
+            applyPropertyPatch(targetPrioritizationPatch.WeaponEffectivenessWeight, () => targetPrioritizationWrapper.WeaponEffectivenessWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetThreatWeight, () => targetPrioritizationWrapper.TargetThreatWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.DistanceWeight, () => targetPrioritizationWrapper.DistanceWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.AngleWeight, () => targetPrioritizationWrapper.AngleWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetPriorityWeight, () => targetPrioritizationWrapper.TargetPriorityWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.AutoTargetStickyBias, () => targetPrioritizationWrapper.AutoTargetStickyBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.ManualTargetStickyBias, () => targetPrioritizationWrapper.ManualTargetStickyBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetSameCommanderBias, () => targetPrioritizationWrapper.TargetSameCommanderBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetWithinFOVBias, () => targetPrioritizationWrapper.TargetWithinFOVBias, x => Fixed64.UnsafeFromDouble(x));
+        }
+        
         public void ApplyUnitHangarAttributesPatch(UnitHangarAttributesPatch unitHangarPatch, UnitHangarAttributesWrapper unitHangarWrapper)
         {
             applyPropertyPatch(unitHangarPatch.AlignmentTime, () => unitHangarWrapper.AlignmentTime, x => Fixed64.UnsafeFromDouble(x));
@@ -453,6 +668,17 @@ namespace Subsystem
             applyPropertyPatch(hangarBayPatch.DockReceivingYOffset, () => hangarBayWrapper.DockReceivingYOffset, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(hangarBayPatch.DoorAnimationSeconds, () => hangarBayWrapper.DoorAnimationSeconds, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(hangarBayPatch.UndockLiftTime, () => hangarBayWrapper.UndockLiftTime, x => Fixed64.UnsafeFromDouble(x));
+        }
+
+        public void ApplyDetectableAttributesPatch(DetectableAttributesPatch detectablePatch, DetectableAttributesWrapper detectableWrapper)
+        {
+            applyPropertyPatch(detectablePatch.DisplayLastKnownLocation, () => detectableWrapper.DisplayLastKnownLocation);
+            applyPropertyPatch(detectablePatch.LastKnownDuration, () => detectableWrapper.LastKnownDuration, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(detectablePatch.TimeVisibleAfterFiring, () => detectableWrapper.TimeVisibleAfterFiring);
+            applyPropertyPatch(detectablePatch.AlwaysVisible, () => detectableWrapper.AlwaysVisible);
+            applyPropertyPatch(detectablePatch.MinimumStateAfterDetection, () => detectableWrapper.MinimumStateAfterDetection);
+            applyPropertyPatch(detectablePatch.FOWFadeDuration, () => detectableWrapper.FOWFadeDuration, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(detectablePatch.SetHasBeenSeenBeforeOnSpawn, () => detectableWrapper.SetHasBeenSeenBeforeOnSpawn);
         }
 
         public void ApplyUnitMovementAttributesPatch(UnitMovementAttributesPatch unitMovementAttributesPatch, UnitMovementAttributesWrapper unitMovementAttributesWrapper)
