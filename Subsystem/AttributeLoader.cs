@@ -209,7 +209,9 @@ namespace Subsystem
         private void applyListPatch<TPatch, TWrapper>(Dictionary<string, TPatch> patch, List<TWrapper> wrappers, Func<TWrapper> createWrapper, Action<TPatch, TWrapper> applyPatch, string elementName)
             where TWrapper : class
         {
-            foreach (var kvp in patch.OrderBy(x => x.Key))
+            var parsed = new Dictionary<int, TPatch>();
+
+            foreach (var kvp in patch)
             {
                 if (!int.TryParse(kvp.Key, out var index))
                 {
@@ -217,6 +219,12 @@ namespace Subsystem
                     break;
                 }
 
+                parsed[index] = kvp.Value;
+            }
+
+            foreach (var kvp in parsed.OrderBy(p => p.Key))
+            {
+                var index = kvp.Key;
                 var elementPatch = kvp.Value;
 
                 using (logger.BeginScope($"{elementName}: {index}"))
