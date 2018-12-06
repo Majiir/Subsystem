@@ -176,12 +176,13 @@ namespace Subsystem
             var unitAttributes = entityType.Get<UnitAttributes>();
             if (unitAttributes != null)
             {
-                for (var i = 0; i < unitAttributes.WeaponLoadout.Length; i++)
+                var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
+                for (var i = 0; i < unitAttributesWrapper.WeaponLoadout.Length; i++)
                 {
-                    var weaponBinding = unitAttributes.WeaponLoadout[i];
+                    var weaponBinding = unitAttributesWrapper.WeaponLoadout[i];
                     if (weaponBinding.Weapon.Name == weaponAttributesWrapper.Name)
                     {
-                        unitAttributes.WeaponLoadout[i] = new WeaponBinding(
+                        unitAttributesWrapper.WeaponLoadout[i] = new WeaponBinding(
                             weaponID: weaponBinding.WeaponID,
                             weaponBindingIndex: weaponBinding.WeaponBindingIndex,
                             weapon: weaponAttributesWrapper,
@@ -194,6 +195,7 @@ namespace Subsystem
                         );
                     }
                 }
+                entityType.Replace(unitAttributes, unitAttributesWrapper);
             }
         }
 
