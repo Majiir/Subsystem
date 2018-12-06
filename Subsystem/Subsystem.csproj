@@ -44,9 +44,12 @@
   <ItemGroup>
     <Compile Include="IRemovable.cs" />
     <Compile Include="Patch\AbilityAttributesPatch.cs" />
+    <Compile Include="Patch\HealthOverTimeAttributesPatch.cs" />
+    <Compile Include="Patch\ModifierPatch.cs" />
     <Compile Include="Patch\AttributeBuffPatch.cs" />
     <Compile Include="Patch\EntityTypeToSpawnAttributesPatch.cs" />
     <Compile Include="Patch\ExperienceAttributesPatch.cs" />
+    <Compile Include="Patch\StatusEffectAttributesPatch.cs" />
     <Compile Include="Patch\ExperienceLevelAttributesPatch.cs" />
     <Compile Include="Patch\InventoryAttributesPatch.cs" />
     <Compile Include="Patch\StorageAttributesPatch.cs" />
