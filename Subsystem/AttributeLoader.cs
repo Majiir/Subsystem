@@ -29,17 +29,45 @@ namespace Subsystem
         {
             try
             {
-                var jsonPath = Path.Combine(Application.dataPath, "patch.json");
-                var json = File.ReadAllText(jsonPath);
-
-                var attributesPatch = JsonMapper.ToObject<AttributesPatch>(json);
-
+                AttributesPatch attributesPatch = JsonMapper.ToObject<AttributesPatch>(AttributeLoader.GetPatchData());
                 ApplyAttributesPatch(entityTypeCollection, attributesPatch);
             }
             catch (Exception e)
             {
                 Debug.LogWarning($"[SUBSYSTEM] Error applying patch file: {e}");
             }
+        }
+
+        public static string GetPatchData()
+        {
+            if (AttributeLoader.PatchOverrideData != "")
+            {
+                return AttributeLoader.PatchOverrideData;
+            }
+            string result;
+            try
+            {
+                result = File.ReadAllText(Path.Combine(Path.Combine(Application.dataPath, (Application.platform == RuntimePlatform.OSXPlayer) ? "Resources/Data" : ""), "patch.json"));
+            }
+            catch (Exception)
+            {
+                Debug.LogWarning(string.Format("[SUBSYSTEM] Patch file not found", new object[0]));
+                result = "";
+            }
+            return result;
+        }
+
+        public static bool IsPatchValid(string patch)
+        {
+            try
+            {
+                JsonMapper.ToObject<AttributesPatch>(patch);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
         }
 
         public void ApplyAttributesPatch(EntityTypeCollection entityTypeCollection, AttributesPatch attributesPatch)
@@ -728,5 +756,7 @@ namespace Subsystem
             applyPropertyPatch(unitDynamicsAttributesPatch.DeathDriftTime, () => unitDynamicsAttributesWrapper.DeathDriftTime, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(unitDynamicsAttributesPatch.PermanentlyImmobile, () => unitDynamicsAttributesWrapper.PermanentlyImmobile);
         }
+
+        public static string PatchOverrideData { get; set; } = "";
     }
 }
