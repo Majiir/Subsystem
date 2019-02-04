@@ -52,6 +52,7 @@
     <Compile Include="Patch\StatusEffectAttributesPatch.cs" />
     <Compile Include="Patch\ExperienceLevelAttributesPatch.cs" />
     <Compile Include="Patch\InventoryAttributesPatch.cs" />
+    <Compile Include="Patch\StatusEffectsSetAttributesPatch.cs" />
     <Compile Include="Patch\StorageAttributesPatch.cs" />
     <Compile Include="Patch\TargetPrioritizationAttributesPatch.cs" />
     <Compile Include="Patch\TurretAttributesPatch.cs" />
@@ -82,6 +83,7 @@
     <Compile Include="Patch\UnitAttributesPatch.cs" />
     <Compile Include="Wrappers\StorageAttributesWrapper.cs" />
     <Compile Include="Wrappers\TurretAttributesWrapper.cs" />
+    <Compile Include="Wrappers\StatusEffectAttributesWrapper.cs" />
     <Compile Include="Wrappers\UnitAttributesWrapper.cs" />
     <Compile Include="Patch\UnitDynamicsAttributesPatch.cs" />
     <Compile Include="Wrappers\UnitDynamicsAttributesWrapper.cs" />
@@ -90,6 +92,7 @@
     <Compile Include="Patch\UnitMovementAttributesPatch.cs" />
     <Compile Include="Wrappers\UnitMovementAttributesWrapper.cs" />
     <Compile Include="Patch\WeaponAttributesPatch.cs" />
+    <Compile Include="Wrappers\StatusEffectsSetAttributesWrapper.cs" />
     <Compile Include="Wrappers\WeaponAttributesWrapper.cs" />
     <Compile Include="Wrappers\WeaponModifierInfoWrapper.cs" />
   </ItemGroup>

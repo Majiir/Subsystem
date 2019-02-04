@@ -208,6 +208,40 @@ namespace Subsystem
             experienceAttributesWrapper.Levels = wrappers.ToArray();
         }
 
+        private void applyArrayPropertyPatch<TWrapper, TArrayType>(TArrayType[] patchArray, TWrapper wrapper, string elementName)
+        {
+            if (patchArray == null)
+                return;
+
+            using (logger.BeginScope($"{elementName}:"))
+            {
+                Debug.Log("1");
+                var wrapperArrayProperty = wrapper.GetType().GetProperty(elementName);
+                Debug.Log("2");
+                TArrayType[] wrapperArray = wrapperArrayProperty.GetValue(wrapper, null) as TArrayType[];
+                Debug.Log("3");
+                if (wrapperArray == null)
+                {
+                    logger.Log($"old: null");
+                }
+                else
+                {
+                    Debug.Log("4");
+                    var oldValues = wrapperArray.Select(x => x.ToString()).ToArray();
+                    Debug.Log("5");
+                    logger.Log($"old: {string.Join(", ", oldValues)}");
+                    Debug.Log("6");
+                }
+                Debug.Log("7");
+                var newValues = patchArray.Select(x => x.ToString()).ToArray();
+                Debug.Log("8");
+                logger.Log($"new: {string.Join(", ", newValues)}");
+                Debug.Log("9");
+                wrapperArrayProperty.SetValue(wrapper, patchArray, null);
+                Debug.Log("10");
+            }
+        }
+
         private void applyListPatch<TPatch, TWrapper>(Dictionary<string, TPatch> patch, List<TWrapper> wrappers, Func<TWrapper> createWrapper, Action<TPatch, TWrapper> applyPatch, string elementName)
             where TWrapper : class
         {
@@ -517,6 +551,8 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsExcludeTargetType, () => weaponAttributesWrapper.StatusEffectsExcludeTargetType);
             applyPropertyPatch(weaponAttributesPatch.ActiveStatusEffectsIndex, () => weaponAttributesWrapper.ActiveStatusEffectsIndex);
 
+            applyStatusEffectsSetAttributesPatch(weaponAttributesPatch, weaponAttributesWrapper);
+
             applyEntityTypesToSpawnOnImpact(weaponAttributesPatch, weaponAttributesWrapper);
 
             if (weaponAttributesPatch.TargetPrioritizationAttributes != null)
@@ -547,6 +583,20 @@ namespace Subsystem
             applyPropertyPatch(weaponModifierInfoPatch.ClassOperator, () => weaponModifierInfoWrapper.ClassOperator);
             applyPropertyPatch(weaponModifierInfoPatch.Modifier, () => weaponModifierInfoWrapper.Modifier);
             applyPropertyPatch(weaponModifierInfoPatch.Amount, () => weaponModifierInfoWrapper.Amount);
+        }
+
+        private void applyStatusEffectsSetAttributesPatch(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
+        {
+            var wrappers = weaponAttributesWrapper.StatusEffectsSets.Select(x => new StatusEffectsSetAttributesWrapper(x)).ToList();
+
+            applyListPatch(weaponAttributesPatch.StatusEffectsSets, wrappers, () => new StatusEffectsSetAttributesWrapper(), ApplyStatusEffectsSetAttributesPatch, nameof(StatusEffectsSetAttributes));
+
+            weaponAttributesWrapper.StatusEffectsSets = wrappers.Where(x => x != null).ToArray();
+        }
+
+        public void ApplyStatusEffectsSetAttributesPatch(StatusEffectsSetAttributesPatch patch, StatusEffectsSetAttributesWrapper wrapper)
+        {
+            applyArrayPropertyPatch(patch.StatusEffects, wrapper, "StatusEffects");
         }
 
         private void applyEntityTypesToSpawnOnImpact(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
