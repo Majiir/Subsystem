@@ -2,7 +2,7 @@
 
 namespace Subsystem.Patch
 {
-    public class ModifierPatch : IRemovable
+    public class ModifierAttributesPatch : IRemovable
     {
         public ModifierType? ModifierType { get; set; }
 

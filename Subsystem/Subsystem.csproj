@@ -45,7 +45,7 @@
     <Compile Include="IRemovable.cs" />
     <Compile Include="Patch\AbilityAttributesPatch.cs" />
     <Compile Include="Patch\HealthOverTimeAttributesPatch.cs" />
-    <Compile Include="Patch\ModifierPatch.cs" />
+    <Compile Include="Patch\ModifierAttributesPatch.cs" />
     <Compile Include="Patch\AttributeBuffPatch.cs" />
     <Compile Include="Patch\EntityTypeToSpawnAttributesPatch.cs" />
     <Compile Include="Patch\ExperienceAttributesPatch.cs" />
@@ -55,6 +55,7 @@
     <Compile Include="Patch\StatusEffectsSetAttributesPatch.cs" />
     <Compile Include="Patch\StorageAttributesPatch.cs" />
     <Compile Include="Patch\TargetPrioritizationAttributesPatch.cs" />
+    <Compile Include="Patch\UnitTypeBuffPatch.cs" />
     <Compile Include="Patch\TurretAttributesPatch.cs" />
     <Compile Include="Patch\DetectableAttributesPatch.cs" />
     <Compile Include="Patch\WeaponModifierInfoPatch.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="Wrappers\StorageAttributesWrapper.cs" />
     <Compile Include="Wrappers\TurretAttributesWrapper.cs" />
     <Compile Include="Wrappers\StatusEffectAttributesWrapper.cs" />
+    <Compile Include="Wrappers\UnitTypeBuffWrapper.cs" />
     <Compile Include="Wrappers\UnitAttributesWrapper.cs" />
     <Compile Include="Patch\UnitDynamicsAttributesPatch.cs" />
     <Compile Include="Wrappers\UnitDynamicsAttributesWrapper.cs" />
