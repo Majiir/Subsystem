@@ -657,7 +657,7 @@ namespace Subsystem
 
                     double avgBurst = (weaponAttributesWrapper.BurstPeriodMaxTimeMS + weaponAttributesWrapper.BurstPeriodMinTimeMS) * 0.5;
 
-                    double averageShotsPerBurst = burstVariance == 0 ? shotsMin : (double)(shotsMin * lowBracket + (shotsMax + shotsMin) / 2 * midBracket + shotsMax * highBracket) / burstVariance;
+                    double averageShotsPerBurst = burstVariance == 0 ? shotsMin : (double)(shotsMin * lowBracket + (shotsMax + shotsMin) / 2 * midBracket + shotsMax * highBracket) / (lowBracket + midBracket + highBracket);
                     double trueROF = averageShotsPerBurst / avgBurst * 1000;
 
                     double sequenceDuration = (weaponAttributesWrapper.WindUpTimeMS + (avgBurst + weaponAttributesWrapper.CooldownTimeMS) * (weaponAttributesWrapper.NumberOfBursts - 1) + avgBurst + weaponAttributesWrapper.ReloadTimeMS) / 1000;
