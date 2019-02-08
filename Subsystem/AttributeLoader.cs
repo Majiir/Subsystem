@@ -63,6 +63,7 @@ namespace Subsystem
                     applyUnnamedComponentPatch<UnitAttributesPatch, UnitAttributes, UnitAttributesWrapper>(entityType, entityTypePatch.UnitAttributes, x => new UnitAttributesWrapper(x), ApplyUnitAttributesPatch);
                     applyUnnamedComponentPatch<ResearchItemAttributesPatch, ResearchItemAttributes, ResearchItemAttributesWrapper>(entityType, entityTypePatch.ResearchItemAttributes, x => new ResearchItemAttributesWrapper(x), ApplyResearchItemAttributesPatch);
                     applyUnnamedComponentPatch<UnitHangarAttributesPatch, UnitHangarAttributes, UnitHangarAttributesWrapper>(entityType, entityTypePatch.UnitHangarAttributes, x => new UnitHangarAttributesWrapper(x), ApplyUnitHangarAttributesPatch);
+                    applyUnnamedComponentPatch<DetectableAttributesPatch, DetectableAttributes, DetectableAttributesWrapper>(entityType, entityTypePatch.DetectableAttributes, x => new DetectableAttributesWrapper(x), ApplyDetectableAttributesPatch);
                     applyUnnamedComponentPatch<UnitMovementAttributesPatch, UnitMovementAttributes, UnitMovementAttributesWrapper>(entityType, entityTypePatch.UnitMovementAttributes, x => new UnitMovementAttributesWrapper(x), ApplyUnitMovementAttributesPatch);
 
                     applyNamedComponentPatch<AbilityAttributesPatch, AbilityAttributes, AbilityAttributesWrapper>(entityType, entityTypePatch.AbilityAttributes, x => new AbilityAttributesWrapper(x), ApplyAbilityAttributesPatch);
@@ -175,12 +176,13 @@ namespace Subsystem
             var unitAttributes = entityType.Get<UnitAttributes>();
             if (unitAttributes != null)
             {
-                for (var i = 0; i < unitAttributes.WeaponLoadout.Length; i++)
+                var unitAttributesWrapper = new UnitAttributesWrapper(unitAttributes);
+                for (var i = 0; i < unitAttributesWrapper.WeaponLoadout.Length; i++)
                 {
-                    var weaponBinding = unitAttributes.WeaponLoadout[i];
+                    var weaponBinding = unitAttributesWrapper.WeaponLoadout[i];
                     if (weaponBinding.Weapon.Name == weaponAttributesWrapper.Name)
                     {
-                        unitAttributes.WeaponLoadout[i] = new WeaponBinding(
+                        unitAttributesWrapper.WeaponLoadout[i] = new WeaponBinding(
                             weaponID: weaponBinding.WeaponID,
                             weaponBindingIndex: weaponBinding.WeaponBindingIndex,
                             weapon: weaponAttributesWrapper,
@@ -193,6 +195,7 @@ namespace Subsystem
                         );
                     }
                 }
+                entityType.Replace(unitAttributes, unitAttributesWrapper);
             }
         }
 
@@ -208,7 +211,9 @@ namespace Subsystem
         private void applyListPatch<TPatch, TWrapper>(Dictionary<string, TPatch> patch, List<TWrapper> wrappers, Func<TWrapper> createWrapper, Action<TPatch, TWrapper> applyPatch, string elementName)
             where TWrapper : class
         {
-            foreach (var kvp in patch.OrderBy(x => x.Key))
+            var parsed = new Dictionary<int, TPatch>();
+
+            foreach (var kvp in patch)
             {
                 if (!int.TryParse(kvp.Key, out var index))
                 {
@@ -216,6 +221,12 @@ namespace Subsystem
                     break;
                 }
 
+                parsed[index] = kvp.Value;
+            }
+
+            foreach (var kvp in parsed.OrderBy(p => p.Key))
+            {
+                var index = kvp.Key;
                 var elementPatch = kvp.Value;
 
                 using (logger.BeginScope($"{elementName}: {index}"))
@@ -508,6 +519,18 @@ namespace Subsystem
 
             applyEntityTypesToSpawnOnImpact(weaponAttributesPatch, weaponAttributesWrapper);
 
+            if (weaponAttributesPatch.TargetPrioritizationAttributes != null)
+            {
+                using (logger.BeginScope($"TargetPrioritizationAttributes:"))
+                {
+                    var targetPrioritizationWrapper = new TargetPriorizationAttributesWrapper(weaponAttributesWrapper.TargetPriorizationAttributes);
+
+                    ApplyTargetPrioritizationAttributesPatch(weaponAttributesPatch.TargetPrioritizationAttributes, targetPrioritizationWrapper);
+
+                    weaponAttributesWrapper.TargetPriorizationAttributes = targetPrioritizationWrapper;
+                }
+            }
+
             if (weaponAttributesPatch.OutputDPS == true)
             {
                 OutputWeaponDPS(weaponAttributesWrapper);
@@ -658,6 +681,19 @@ namespace Subsystem
             }
         }
 
+        public void ApplyTargetPrioritizationAttributesPatch(TargetPrioritizationAttributesPatch targetPrioritizationPatch, TargetPriorizationAttributesWrapper targetPrioritizationWrapper)
+        {
+            applyPropertyPatch(targetPrioritizationPatch.WeaponEffectivenessWeight, () => targetPrioritizationWrapper.WeaponEffectivenessWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetThreatWeight, () => targetPrioritizationWrapper.TargetThreatWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.DistanceWeight, () => targetPrioritizationWrapper.DistanceWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.AngleWeight, () => targetPrioritizationWrapper.AngleWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetPriorityWeight, () => targetPrioritizationWrapper.TargetPriorityWeight, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.AutoTargetStickyBias, () => targetPrioritizationWrapper.AutoTargetStickyBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.ManualTargetStickyBias, () => targetPrioritizationWrapper.ManualTargetStickyBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetSameCommanderBias, () => targetPrioritizationWrapper.TargetSameCommanderBias, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(targetPrioritizationPatch.TargetWithinFOVBias, () => targetPrioritizationWrapper.TargetWithinFOVBias, x => Fixed64.UnsafeFromDouble(x));
+        }
+        
         public void ApplyUnitHangarAttributesPatch(UnitHangarAttributesPatch unitHangarPatch, UnitHangarAttributesWrapper unitHangarWrapper)
         {
             applyPropertyPatch(unitHangarPatch.AlignmentTime, () => unitHangarWrapper.AlignmentTime, x => Fixed64.UnsafeFromDouble(x));
@@ -704,6 +740,17 @@ namespace Subsystem
             applyPropertyPatch(hangarBayPatch.DockReceivingYOffset, () => hangarBayWrapper.DockReceivingYOffset, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(hangarBayPatch.DoorAnimationSeconds, () => hangarBayWrapper.DoorAnimationSeconds, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(hangarBayPatch.UndockLiftTime, () => hangarBayWrapper.UndockLiftTime, x => Fixed64.UnsafeFromDouble(x));
+        }
+
+        public void ApplyDetectableAttributesPatch(DetectableAttributesPatch detectablePatch, DetectableAttributesWrapper detectableWrapper)
+        {
+            applyPropertyPatch(detectablePatch.DisplayLastKnownLocation, () => detectableWrapper.DisplayLastKnownLocation);
+            applyPropertyPatch(detectablePatch.LastKnownDuration, () => detectableWrapper.LastKnownDuration, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(detectablePatch.TimeVisibleAfterFiring, () => detectableWrapper.TimeVisibleAfterFiring);
+            applyPropertyPatch(detectablePatch.AlwaysVisible, () => detectableWrapper.AlwaysVisible);
+            applyPropertyPatch(detectablePatch.MinimumStateAfterDetection, () => detectableWrapper.MinimumStateAfterDetection);
+            applyPropertyPatch(detectablePatch.FOWFadeDuration, () => detectableWrapper.FOWFadeDuration, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(detectablePatch.SetHasBeenSeenBeforeOnSpawn, () => detectableWrapper.SetHasBeenSeenBeforeOnSpawn);
         }
 
         public void ApplyUnitMovementAttributesPatch(UnitMovementAttributesPatch unitMovementAttributesPatch, UnitMovementAttributesWrapper unitMovementAttributesWrapper)
