@@ -44,15 +44,20 @@
   <ItemGroup>
     <Compile Include="IRemovable.cs" />
     <Compile Include="Patch\AbilityAttributesPatch.cs" />
+    <Compile Include="Patch\HealthOverTimeAttributesPatch.cs" />
+    <Compile Include="Patch\ModifierAttributesPatch.cs" />
     <Compile Include="Patch\AttributeBuffPatch.cs" />
     <Compile Include="Patch\EntityTypeToSpawnAttributesPatch.cs" />
     <Compile Include="Patch\ExperienceAttributesPatch.cs" />
+    <Compile Include="Patch\StatusEffectAttributesPatch.cs" />
     <Compile Include="Patch\ExperienceLevelAttributesPatch.cs" />
     <Compile Include="Patch\PowerLevelAttributesPatch.cs" />
     <Compile Include="Patch\PowerSystemAttributesPatch.cs" />
     <Compile Include="Patch\InventoryAttributesPatch.cs" />
+    <Compile Include="Patch\StatusEffectsSetAttributesPatch.cs" />
     <Compile Include="Patch\StorageAttributesPatch.cs" />
     <Compile Include="Patch\TargetPrioritizationAttributesPatch.cs" />
+    <Compile Include="Patch\UnitTypeBuffPatch.cs" />
     <Compile Include="Patch\TurretAttributesPatch.cs" />
     <Compile Include="Patch\DetectableAttributesPatch.cs" />
     <Compile Include="Patch\WeaponModifierInfoPatch.cs" />
@@ -81,6 +86,8 @@
     <Compile Include="Patch\UnitAttributesPatch.cs" />
     <Compile Include="Wrappers\StorageAttributesWrapper.cs" />
     <Compile Include="Wrappers\TurretAttributesWrapper.cs" />
+    <Compile Include="Wrappers\StatusEffectAttributesWrapper.cs" />
+    <Compile Include="Wrappers\UnitTypeBuffWrapper.cs" />
     <Compile Include="Wrappers\UnitAttributesWrapper.cs" />
     <Compile Include="Patch\UnitDynamicsAttributesPatch.cs" />
     <Compile Include="Wrappers\UnitDynamicsAttributesWrapper.cs" />
@@ -89,6 +96,7 @@
     <Compile Include="Patch\UnitMovementAttributesPatch.cs" />
     <Compile Include="Wrappers\UnitMovementAttributesWrapper.cs" />
     <Compile Include="Patch\WeaponAttributesPatch.cs" />
+    <Compile Include="Wrappers\StatusEffectsSetAttributesWrapper.cs" />
     <Compile Include="Wrappers\WeaponAttributesWrapper.cs" />
     <Compile Include="Wrappers\WeaponModifierInfoWrapper.cs" />
   </ItemGroup>

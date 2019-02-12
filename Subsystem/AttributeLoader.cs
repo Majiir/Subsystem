@@ -29,17 +29,46 @@ namespace Subsystem
         {
             try
             {
-                var jsonPath = Path.Combine(Application.dataPath, "patch.json");
-                var json = File.ReadAllText(jsonPath);
-
-                var attributesPatch = JsonMapper.ToObject<AttributesPatch>(json);
-
+                AttributesPatch attributesPatch = JsonMapper.ToObject<AttributesPatch>(AttributeLoader.GetPatchData());
                 ApplyAttributesPatch(entityTypeCollection, attributesPatch);
             }
             catch (Exception e)
             {
                 Debug.LogWarning($"[SUBSYSTEM] Error applying patch file: {e}");
+                File.WriteAllText(Path.Combine(Application.dataPath, "Subsystem.log"), writer.ToString());
             }
+        }
+
+        public static string GetPatchData()
+        {
+            if (AttributeLoader.PatchOverrideData != "")
+            {
+                return AttributeLoader.PatchOverrideData;
+            }
+            string result;
+            try
+            {
+                result = File.ReadAllText(Path.Combine(Path.Combine(Application.dataPath, (Application.platform == RuntimePlatform.OSXPlayer) ? "Resources/Data" : ""), "patch.json"));
+            }
+            catch (Exception)
+            {
+                Debug.LogWarning(string.Format("[SUBSYSTEM] Patch file not found", new object[0]));
+                result = "";
+            }
+            return result;
+        }
+
+        public static bool IsPatchValid(string patch)
+        {
+            try
+            {
+                JsonMapper.ToObject<AttributesPatch>(patch);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
         }
 
         public void ApplyAttributesPatch(EntityTypeCollection entityTypeCollection, AttributesPatch attributesPatch)
@@ -65,6 +94,7 @@ namespace Subsystem
                     applyUnnamedComponentPatch<UnitHangarAttributesPatch, UnitHangarAttributes, UnitHangarAttributesWrapper>(entityType, entityTypePatch.UnitHangarAttributes, x => new UnitHangarAttributesWrapper(x), ApplyUnitHangarAttributesPatch);
                     applyUnnamedComponentPatch<DetectableAttributesPatch, DetectableAttributes, DetectableAttributesWrapper>(entityType, entityTypePatch.DetectableAttributes, x => new DetectableAttributesWrapper(x), ApplyDetectableAttributesPatch);
                     applyUnnamedComponentPatch<UnitMovementAttributesPatch, UnitMovementAttributes, UnitMovementAttributesWrapper>(entityType, entityTypePatch.UnitMovementAttributes, x => new UnitMovementAttributesWrapper(x), ApplyUnitMovementAttributesPatch);
+                    applyUnnamedComponentPatch<StatusEffectAttributesPatch, StatusEffectAttributes, StatusEffectAttributesWrapper>(entityType, entityTypePatch.StatusEffectAttributes, x => new StatusEffectAttributesWrapper(x), ApplyStatusEffectAttributesPatch);
 
                     applyNamedComponentPatch<AbilityAttributesPatch, AbilityAttributes, AbilityAttributesWrapper>(entityType, entityTypePatch.AbilityAttributes, x => new AbilityAttributesWrapper(x), ApplyAbilityAttributesPatch);
                     applyNamedComponentPatch<StorageAttributesPatch, StorageAttributes, StorageAttributesWrapper>(entityType, entityTypePatch.StorageAttributes, x => new StorageAttributesWrapper(x), ApplyStorageAttributesPatch);
@@ -127,6 +157,22 @@ namespace Subsystem
             }
         }
 
+        private void applyPropertyPatch<TProperty>(TProperty? newValue, ref TProperty value, string fieldName) where TProperty : struct
+        {
+            if (newValue.HasValue)
+            {
+                setValue(newValue.Value, ref value, fieldName);
+            }
+        }
+
+        private void applyPropertyPatch<TProperty>(TProperty newValue, ref TProperty value, string fieldName) where TProperty : class
+        {
+            if (newValue != null)
+            {
+                setValue(newValue, ref value, fieldName);
+            }
+        }
+
         private void applyPropertyPatch<TProperty>(TProperty? newValue, Expression<Func<TProperty>> expression) where TProperty : struct
         {
             if (newValue.HasValue)
@@ -162,13 +208,19 @@ namespace Subsystem
         private void setProperty<TValue, TProperty>(TValue newValue, Expression<Func<TProperty>> expression, Func<TValue, TProperty> projection)
         {
             var value = projection(newValue);
-
+            
             var accessor = new PropertyAccessor<TProperty>(expression);
 
             var oldValue = accessor.Get();
             accessor.Set(value);
 
             logger.Log($"{accessor.Name}: {value} (was: {oldValue})");
+        }
+
+        private void setValue<TValue>(TValue newValue, ref TValue value, string fieldName)
+        {
+            logger.Log($"{fieldName}: {newValue} (was: {value})");
+            value = newValue;
         }
 
         private static void rebindWeaponAttributes(EntityTypeAttributes entityType, WeaponAttributesWrapper weaponAttributesWrapper)
@@ -208,11 +260,43 @@ namespace Subsystem
             experienceAttributesWrapper.Levels = wrappers.ToArray();
         }
 
+        private void applyArrayPropertyPatch<TWrapper, TArrayType>(TArrayType[] patchArray, TWrapper wrapper, string elementName)
+        {
+            if (patchArray == null)
+                return;
+
+            using (logger.BeginScope($"{elementName}:"))
+            {
+                var wrapperArrayProperty = wrapper.GetType().GetProperty(elementName);
+                TArrayType[] wrapperArray = wrapperArrayProperty.GetValue(wrapper, null) as TArrayType[];
+                if (wrapperArray == null)
+                {
+                    logger.Log($"old: null");
+                }
+                else
+                {
+                    var oldValues = wrapperArray.Select(x => x.ToString()).ToArray();
+                    logger.Log($"old: {string.Join(", ", oldValues)}");
+                }
+                var newValues = patchArray.Select(x => x.ToString()).ToArray();
+                if (newValues.Length == 0)
+                {
+                    logger.Log($"new: null");
+                    wrapperArrayProperty.SetValue(wrapper, null, null);
+                }
+                else
+                {
+                    logger.Log($"new: {string.Join(", ", newValues)}");
+                    wrapperArrayProperty.SetValue(wrapper, patchArray, null);
+                }
+            }
+        }
+
         private void applyListPatch<TPatch, TWrapper>(Dictionary<string, TPatch> patch, List<TWrapper> wrappers, Func<TWrapper> createWrapper, Action<TPatch, TWrapper> applyPatch, string elementName)
             where TWrapper : class
         {
             var parsed = new Dictionary<int, TPatch>();
-
+            
             foreach (var kvp in patch)
             {
                 if (!int.TryParse(kvp.Key, out var index))
@@ -223,7 +307,7 @@ namespace Subsystem
 
                 parsed[index] = kvp.Value;
             }
-
+            
             foreach (var kvp in parsed.OrderBy(p => p.Key))
             {
                 var index = kvp.Key;
@@ -232,7 +316,7 @@ namespace Subsystem
                 using (logger.BeginScope($"{elementName}: {index}"))
                 {
                     var remove = elementPatch is IRemovable removable && removable.Remove;
-
+                    
                     if (index < wrappers.Count)
                     {
                         if (remove)
@@ -258,9 +342,9 @@ namespace Subsystem
 
                         logger.Log("(created)");
                         var elementWrapper = createWrapper(); // Deal with INamed?
-
+                        
                         applyPatch(elementPatch, elementWrapper);
-
+                        
                         wrappers.Add(elementWrapper);
                     }
                     else // if (index > wrappers.Count)
@@ -517,6 +601,8 @@ namespace Subsystem
             applyPropertyPatch(weaponAttributesPatch.StatusEffectsExcludeTargetType, () => weaponAttributesWrapper.StatusEffectsExcludeTargetType);
             applyPropertyPatch(weaponAttributesPatch.ActiveStatusEffectsIndex, () => weaponAttributesWrapper.ActiveStatusEffectsIndex);
 
+            applyStatusEffectsSetAttributesPatch(weaponAttributesPatch, weaponAttributesWrapper);
+
             applyEntityTypesToSpawnOnImpact(weaponAttributesPatch, weaponAttributesWrapper);
 
             if (weaponAttributesPatch.TargetPrioritizationAttributes != null)
@@ -547,6 +633,20 @@ namespace Subsystem
             applyPropertyPatch(weaponModifierInfoPatch.ClassOperator, () => weaponModifierInfoWrapper.ClassOperator);
             applyPropertyPatch(weaponModifierInfoPatch.Modifier, () => weaponModifierInfoWrapper.Modifier);
             applyPropertyPatch(weaponModifierInfoPatch.Amount, () => weaponModifierInfoWrapper.Amount);
+        }
+
+        private void applyStatusEffectsSetAttributesPatch(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
+        {
+            var wrappers = weaponAttributesWrapper.StatusEffectsSets.Select(x => new StatusEffectsSetAttributesWrapper(x)).ToList();
+
+            applyListPatch(weaponAttributesPatch.StatusEffectsSets, wrappers, () => new StatusEffectsSetAttributesWrapper(), ApplyStatusEffectsSetAttributesPatch, nameof(StatusEffectsSetAttributes));
+
+            weaponAttributesWrapper.StatusEffectsSets = wrappers.Where(x => x != null).ToArray();
+        }
+
+        public void ApplyStatusEffectsSetAttributesPatch(StatusEffectsSetAttributesPatch patch, StatusEffectsSetAttributesWrapper wrapper)
+        {
+            applyArrayPropertyPatch(patch.StatusEffects, wrapper, "StatusEffects");
         }
 
         private void applyEntityTypesToSpawnOnImpact(WeaponAttributesPatch weaponAttributesPatch, WeaponAttributesWrapper weaponAttributesWrapper)
@@ -706,6 +806,129 @@ namespace Subsystem
             }
         }
 
+        public void ApplyStatusEffectAttributesPatch(StatusEffectAttributesPatch statusEffectAttributesPatch, StatusEffectAttributesWrapper statusEffectAttributesWrapper)
+        {
+            applyPropertyPatch(statusEffectAttributesPatch.Lifetime, () => statusEffectAttributesWrapper.Lifetime);
+            applyPropertyPatch(statusEffectAttributesPatch.Duration, () => statusEffectAttributesWrapper.Duration, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(statusEffectAttributesPatch.WeaponFireTriggerEndEvent, () => statusEffectAttributesWrapper.WeaponFireTriggerEndEvent);
+            applyPropertyPatch(statusEffectAttributesPatch.MaxStacks, () => statusEffectAttributesWrapper.MaxStacks);
+            applyPropertyPatch(statusEffectAttributesPatch.StackingBehaviour, () => statusEffectAttributesWrapper.StackingBehaviour);
+            
+            var buffsToApplyToTarget = statusEffectAttributesWrapper.BuffsToApplyToTarget.Select(x => new UnitTypeBuffWrapper(x)).ToList();
+            applyListPatch(statusEffectAttributesPatch.BuffsToApplyToTarget, buffsToApplyToTarget, () => new UnitTypeBuffWrapper(), ApplyUnitTypeBuffPatch, "BuffsToApplyToTarget");
+            statusEffectAttributesWrapper.BuffsToApplyToTarget = buffsToApplyToTarget.ToArray();
+
+            var unitTypeBuffsToApply = statusEffectAttributesWrapper.UnitTypeBuffsToApply.Select(x => new UnitTypeBuffWrapper(x)).ToList();
+            applyListPatch(statusEffectAttributesPatch.UnitTypeBuffsToApply, unitTypeBuffsToApply, () => new UnitTypeBuffWrapper(), ApplyUnitTypeBuffPatch, "UnitTypeBuffsToApply");
+            statusEffectAttributesWrapper.UnitTypeBuffsToApply = unitTypeBuffsToApply.ToArray();
+
+            if (statusEffectAttributesPatch.Modifiers != null)
+            {
+                var wrapperModifiers = statusEffectAttributesWrapper.Modifiers.ToList();
+
+                var parsed = new Dictionary<int, ModifierAttributesPatch>();
+
+                foreach (var kvp in statusEffectAttributesPatch.Modifiers)
+                {
+                    if (!int.TryParse(kvp.Key, out var index))
+                    {
+                        logger.Log($"ERROR: Non-integer key: {kvp.Key}");
+                        break;
+                    }
+
+                    parsed[index] = kvp.Value;
+                }
+
+                var toDelete = new Stack<ModifierAttributes>();
+
+                foreach (var kvp in parsed.OrderBy(p => p.Key))
+                {
+                    var index = kvp.Key;
+                    var elementPatch = kvp.Value;
+
+                    using (logger.BeginScope($"Modifiers: {index}"))
+                    {
+                        var remove = elementPatch.Remove;
+
+                        if (index < wrapperModifiers.Count)
+                        {
+                            if (remove)
+                            {
+                                logger.Log("(removed)");
+                                toDelete.Push(wrapperModifiers[index]);
+                                continue;
+                            }
+
+                            ApplyModifiersPatch(elementPatch, wrapperModifiers[index]);
+                        }
+                        else if (index == wrapperModifiers.Count)
+                        {
+                            if (remove)
+                            {
+                                logger.Log("WARNING: Remove flag set for non-existent entry");
+                                continue;
+                            }
+
+                            logger.Log("(created)");
+
+                            ModifierAttributes newValue = new ModifierAttributes();
+                            ApplyModifiersPatch(elementPatch, newValue);
+
+                            wrapperModifiers.Add(newValue);
+                        }
+                        else // if (index > wrapperModifiers.Count)
+                        {
+                            logger.Log("ERROR: Non-consecutive index");
+                            continue;
+                        }
+                    }
+                }
+
+                wrapperModifiers.RemoveAll(x => toDelete.Contains(x));
+
+                statusEffectAttributesWrapper.Modifiers = wrapperModifiers.ToArray();
+            }
+        }
+
+        public void ApplyUnitTypeBuffPatch(UnitTypeBuffPatch unitTypeBuffPatch, UnitTypeBuffWrapper unitTypeBuffWrapper)
+        {
+            applyPropertyPatch(unitTypeBuffPatch.UnitType, () => unitTypeBuffWrapper.UnitType);
+            applyPropertyPatch(unitTypeBuffPatch.UseAsPrefix, () => unitTypeBuffWrapper.UseAsPrefix);
+            applyPropertyPatch(unitTypeBuffPatch.UnitClass, () => unitTypeBuffWrapper.UnitClass);
+            applyPropertyPatch(unitTypeBuffPatch.ClassOperator, () => unitTypeBuffWrapper.ClassOperator);
+
+            var attributeBuffSetWrapper = unitTypeBuffWrapper.BuffSet != null ? new AttributeBuffSetWrapper(unitTypeBuffWrapper.BuffSet) : new AttributeBuffSetWrapper();
+            unitTypeBuffWrapper.BuffSet = attributeBuffSetWrapper;
+
+            applyAttributeBuffSetPatch(unitTypeBuffPatch.BuffSet, attributeBuffSetWrapper);
+        }
+
+        public void ApplyModifiersPatch(ModifierAttributesPatch modifierAttributesPatch, ModifierAttributes modifierAttributesWrapper)
+        {
+            Debug.Log($"modifierAttributesWrapper: {modifierAttributesWrapper} (len: {modifierAttributesWrapper.ModifierType}");
+
+            applyPropertyPatch(modifierAttributesPatch.ModifierType, ref modifierAttributesWrapper.ModifierType, "ModifierType");
+            applyPropertyPatch(modifierAttributesPatch.EnableWeapon_WeaponID, ref modifierAttributesWrapper.EnableWeaponAttributes.WeaponID, "EnableWeapon_WeaponID");
+            applyPropertyPatch(modifierAttributesPatch.SwapFromWeaponID, ref modifierAttributesWrapper.SwapWeaponAttributes.SwapFromWeaponID, "SwapFromWeaponID");
+            applyPropertyPatch(modifierAttributesPatch.SwapToWeaponID, ref modifierAttributesWrapper.SwapWeaponAttributes.SwapToWeaponID, "SwapToWeaponID");
+
+            if (modifierAttributesPatch.HealthOverTimeAttributes != null)
+            {
+                using (logger.BeginScope("HealthOverTimeAttributes:"))
+                {
+                    ApplyHealthOverTimeAttributesPatch(modifierAttributesPatch.HealthOverTimeAttributes, modifierAttributesWrapper.HealthOverTimeAttributes);
+                }
+            }
+        }
+
+        public void ApplyHealthOverTimeAttributesPatch(HealthOverTimeAttributesPatch healthOverTimeAttributesPatch, HealthOverTimeAttributes healthOverTimeAttributesWrapper)
+        {
+            applyPropertyPatch(healthOverTimeAttributesPatch.ID, ref healthOverTimeAttributesWrapper.ID, "ID");
+            applyPropertyPatch(healthOverTimeAttributesPatch.Amount, ref healthOverTimeAttributesWrapper.Amount, "Amount");
+            applyPropertyPatch(healthOverTimeAttributesPatch.MSTickDuration, ref healthOverTimeAttributesWrapper.MSTickDuration, "MSTickDuration");
+            applyPropertyPatch(healthOverTimeAttributesPatch.DamageType, ref healthOverTimeAttributesWrapper.DamageType, "DamageType");
+        }
+
         private void ApplyUnitDynamicsAttributesPatch(UnitDynamicsAttributesPatch unitDynamicsAttributesPatch, UnitDynamicsAttributesWrapper unitDynamicsAttributesWrapper)
         {
             applyPropertyPatch(unitDynamicsAttributesPatch.DriveType, () => unitDynamicsAttributesWrapper.DriveType);
@@ -728,5 +951,7 @@ namespace Subsystem
             applyPropertyPatch(unitDynamicsAttributesPatch.DeathDriftTime, () => unitDynamicsAttributesWrapper.DeathDriftTime, x => Fixed64.UnsafeFromDouble(x));
             applyPropertyPatch(unitDynamicsAttributesPatch.PermanentlyImmobile, () => unitDynamicsAttributesWrapper.PermanentlyImmobile);
         }
+
+        public static string PatchOverrideData { get; set; } = "";
     }
 }
