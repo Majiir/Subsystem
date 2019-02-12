@@ -95,6 +95,7 @@ namespace Subsystem
                     applyUnnamedComponentPatch<DetectableAttributesPatch, DetectableAttributes, DetectableAttributesWrapper>(entityType, entityTypePatch.DetectableAttributes, x => new DetectableAttributesWrapper(x), ApplyDetectableAttributesPatch);
                     applyUnnamedComponentPatch<UnitMovementAttributesPatch, UnitMovementAttributes, UnitMovementAttributesWrapper>(entityType, entityTypePatch.UnitMovementAttributes, x => new UnitMovementAttributesWrapper(x), ApplyUnitMovementAttributesPatch);
                     applyUnnamedComponentPatch<StatusEffectAttributesPatch, StatusEffectAttributes, StatusEffectAttributesWrapper>(entityType, entityTypePatch.StatusEffectAttributes, x => new StatusEffectAttributesWrapper(x), ApplyStatusEffectAttributesPatch);
+                    applyUnnamedComponentPatch<PowerShuntAttributesPatch, PowerShuntAttributes, PowerShuntAttributesWrapper>(entityType, entityTypePatch.PowerShuntAttributes, x => new PowerShuntAttributesWrapper(x), ApplyPowerShuntAttributesPatch);
 
                     applyNamedComponentPatch<AbilityAttributesPatch, AbilityAttributes, AbilityAttributesWrapper>(entityType, entityTypePatch.AbilityAttributes, x => new AbilityAttributesWrapper(x), ApplyAbilityAttributesPatch);
                     applyNamedComponentPatch<StorageAttributesPatch, StorageAttributes, StorageAttributesWrapper>(entityType, entityTypePatch.StorageAttributes, x => new StorageAttributesWrapper(x), ApplyStorageAttributesPatch);
@@ -888,6 +889,61 @@ namespace Subsystem
 
                 statusEffectAttributesWrapper.Modifiers = wrapperModifiers.ToArray();
             }
+        }
+
+        public void ApplyPowerShuntAttributesPatch(PowerShuntAttributesPatch powerShuntAttributesPatch, PowerShuntAttributesWrapper powerShuntAttributesWrapper)
+        {
+            applyPropertyPatch(powerShuntAttributesPatch.PowerLevelChargeTimeSeconds, () => powerShuntAttributesWrapper.PowerLevelChargeTimeSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(powerShuntAttributesPatch.PowerLevelDrainTimeSeconds, () => powerShuntAttributesWrapper.PowerLevelDrainTimeSeconds, x => Fixed64.UnsafeFromDouble(x));
+            applyPropertyPatch(powerShuntAttributesPatch.HeatThreshold, () => powerShuntAttributesWrapper.HeatThreshold);
+            applyPropertyPatch(powerShuntAttributesPatch.CooldownRate, () => powerShuntAttributesWrapper.CooldownRate);
+            applyPropertyPatch(powerShuntAttributesPatch.OverheatDamage, () => powerShuntAttributesWrapper.OverheatDamage);
+            applyPropertyPatch(powerShuntAttributesPatch.NearOverheatWarningMargin, () => powerShuntAttributesWrapper.NearOverheatWarningMargin);
+            applyPropertyPatch(powerShuntAttributesPatch.OverheatReminderPeriod, () => powerShuntAttributesWrapper.OverheatReminderPeriod);
+
+            var powerSystems = powerShuntAttributesWrapper.PowerSystems.Select(x => new PowerSystemAttributesWrapper(x)).ToList();
+            applyListPatch(powerShuntAttributesPatch.PowerSystems, powerSystems, () => new PowerSystemAttributesWrapper(), applyPowerSystemPatch, "PowerSystems");
+            powerShuntAttributesWrapper.PowerSystems = powerSystems.ToArray();
+
+            if (powerShuntAttributesPatch.ReservePowerPool != null)
+            {
+                InventoryAttributesWrapper inventoryAttributesWrapper = new InventoryAttributesWrapper(powerShuntAttributesWrapper.ReservePowerPool);
+                ApplyInventoryAttributesPatch(powerShuntAttributesPatch.ReservePowerPool, inventoryAttributesWrapper);
+                powerShuntAttributesWrapper.ReservePowerPool = inventoryAttributesWrapper;
+            }
+            if (powerShuntAttributesPatch.OverheatingPool != null)
+            {
+                InventoryAttributesWrapper inventoryAttributesWrapper = new InventoryAttributesWrapper(powerShuntAttributesWrapper.OverheatingPool);
+                ApplyInventoryAttributesPatch(powerShuntAttributesPatch.OverheatingPool, inventoryAttributesWrapper);
+                powerShuntAttributesWrapper.OverheatingPool = inventoryAttributesWrapper;
+            }
+            if (powerShuntAttributesPatch.HeatSystem != null)
+            {
+                InventoryAttributesWrapper inventoryAttributesWrapper = new InventoryAttributesWrapper(powerShuntAttributesWrapper.HeatSystem);
+                ApplyInventoryAttributesPatch(powerShuntAttributesPatch.HeatSystem, inventoryAttributesWrapper);
+                powerShuntAttributesWrapper.HeatSystem = inventoryAttributesWrapper;
+            }
+        }
+
+        private void applyPowerSystemPatch(PowerSystemAttributesPatch powerSystemAttributesPatch, PowerSystemAttributesWrapper powerSystemAttributesWrapper)
+        {
+            applyPropertyPatch(powerSystemAttributesPatch.PowerSystemType, () => powerSystemAttributesWrapper.PowerSystemType);
+            applyPropertyPatch(powerSystemAttributesPatch.StartingPowerLevelIndex, () => powerSystemAttributesWrapper.StartingPowerLevelIndex);
+            applyPropertyPatch(powerSystemAttributesPatch.StartingMaxPowerLevelIndex, () => powerSystemAttributesWrapper.StartingMaxPowerLevelIndex);
+
+            var powerLevels = powerSystemAttributesWrapper.PowerLevels.Select(x => new PowerLevelAttributesWrapper(x)).ToList();
+            applyListPatch(powerSystemAttributesPatch.PowerLevels, powerLevels, () => new PowerLevelAttributesWrapper(), applyPowerLevelPatch, "PowerLevels");
+            powerSystemAttributesWrapper.PowerLevels = powerLevels.ToArray();
+        }
+
+        private void applyPowerLevelPatch(PowerLevelAttributesPatch powerLevelAttributesPatch, PowerLevelAttributesWrapper powerLevelAttributesWrapper)
+        {
+            applyPropertyPatch(powerLevelAttributesPatch.PowerUnitsRequired, () => powerLevelAttributesWrapper.PowerUnitsRequired);
+            applyPropertyPatch(powerLevelAttributesPatch.HeatPointsProvided, () => powerLevelAttributesWrapper.HeatPointsProvided);
+
+            var statusEffects = powerLevelAttributesWrapper.StatusEffectsToApply.Select(x => new StatusEffectAttributesWrapper(x)).ToList();
+            applyListPatch(powerLevelAttributesPatch.StatusEffectsToApply, statusEffects, () => new StatusEffectAttributesWrapper(), ApplyStatusEffectAttributesPatch, "StatusEffectsToApply");
+            powerLevelAttributesWrapper.StatusEffectsToApply = statusEffects.ToArray();
         }
 
         public void ApplyUnitTypeBuffPatch(UnitTypeBuffPatch unitTypeBuffPatch, UnitTypeBuffWrapper unitTypeBuffWrapper)

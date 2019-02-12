@@ -1,11 +1,14 @@
-﻿namespace Subsystem.Patch
+﻿using BBI.Game.Data;
+using System.Collections.Generic;
+
+namespace Subsystem.Patch
 {
     public class PowerSystemAttributesPatch
     {
-        PowerSystemType PowerSystemType { get; set; }
-        int StartingPowerLevelIndex { get; set; }
-        int StartingMaxPowerLevelIndex { get; set; }
-        PowerLevelAttributes[] PowerLevels { get; set; }
-        PowerSystemViewAttributes View { get; set; }
+        public PowerSystemType? PowerSystemType { get; set; }
+        public int? StartingPowerLevelIndex { get; set; }
+        public int? StartingMaxPowerLevelIndex { get; set; }
+        public Dictionary<string, PowerLevelAttributesPatch> PowerLevels { get; set; } = new Dictionary<string, PowerLevelAttributesPatch>();
+        //PowerSystemViewAttributes View { get; set; }
     }
 }

@@ -49,6 +49,7 @@
     <Compile Include="Patch\AttributeBuffPatch.cs" />
     <Compile Include="Patch\EntityTypeToSpawnAttributesPatch.cs" />
     <Compile Include="Patch\ExperienceAttributesPatch.cs" />
+    <Compile Include="Patch\PowerShuntAttributesPatch.cs" />
     <Compile Include="Patch\StatusEffectAttributesPatch.cs" />
     <Compile Include="Patch\ExperienceLevelAttributesPatch.cs" />
     <Compile Include="Patch\PowerLevelAttributesPatch.cs" />
@@ -66,6 +67,8 @@
     <Compile Include="Patch\AttributesPatch.cs" />
     <Compile Include="Wrappers\AttributeBuffSetWrapper.cs" />
     <Compile Include="Wrappers\AttributeBuffWrapper.cs" />
+    <Compile Include="Wrappers\PowerLevelAttributesWrapper.cs" />
+    <Compile Include="Wrappers\PowerSystemAttributesWrapper.cs" />
     <Compile Include="Wrappers\TargetPrioritizationAttributesWrapper.cs" />
     <Compile Include="Wrappers\DetectableAttributesWrapper.cs" />
     <Compile Include="Wrappers\CostAttributesWrapper.cs" />
@@ -87,6 +90,7 @@
     <Compile Include="Wrappers\StorageAttributesWrapper.cs" />
     <Compile Include="Wrappers\TurretAttributesWrapper.cs" />
     <Compile Include="Wrappers\StatusEffectAttributesWrapper.cs" />
+    <Compile Include="Wrappers\PowerShuntAttributesWrapper.cs" />
     <Compile Include="Wrappers\UnitTypeBuffWrapper.cs" />
     <Compile Include="Wrappers\UnitAttributesWrapper.cs" />
     <Compile Include="Patch\UnitDynamicsAttributesPatch.cs" />

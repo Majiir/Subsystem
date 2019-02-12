@@ -6,6 +6,10 @@ namespace Subsystem.Wrappers
 {
     public class StatusEffectAttributesWrapper : NamedObjectBase, StatusEffectAttributes
     {
+        public StatusEffectAttributesWrapper()
+        {
+        }
+
         public StatusEffectAttributesWrapper(StatusEffectAttributes other) : base(other.Name)
         {
             Lifetime = other.Lifetime;
