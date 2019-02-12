@@ -2,6 +2,7 @@
 using BBI.Core.Utility.FixedPoint;
 using BBI.Game.Data;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Subsystem.Wrappers
 {
@@ -47,7 +48,7 @@ namespace Subsystem.Wrappers
             NoTextNotifications = other.NoTextNotifications;
             NotificationFlags = other.NotificationFlags;
             FireRateDisplay = other.FireRateDisplay;
-            WeaponLoadout = other.WeaponLoadout;
+            WeaponLoadout = other.WeaponLoadout.ToArray();
             PriorityAsTarget = other.PriorityAsTarget;
             ThreatData = other.ThreatData;
             ThreatCounters = other.ThreatCounters;
